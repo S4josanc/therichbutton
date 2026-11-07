@@ -24,3 +24,13 @@
 .tier--platinum .gift-option:hover{border-color:#d7e0e8;background:rgba(175,189,203,.12)}
 .tier--diamond .gift-option{border-color:rgba(177,219,236,.4);color:#cce8f3;background:rgba(156,203,225,.04)}
 .tier--diamond .gift-option:hover{border-color:#cce8f3;background:rgba(156,203,225,.12)}
+
+/* Always-on premium filled primary CTAs, matched to edition metal */
+.tier--gold .tier__button,.tier--platinum .tier__button,.tier--diamond .tier__button{background-image:none;box-shadow:inset 0 1px 0 #ffffff30;transition:filter .2s,transform .2s,box-shadow .2s}
+.tier--gold .tier__button{background:#d4b577;border-color:#d4b577;color:#1c160d}
+.tier--platinum .tier__button{background:#c9d1dc;border-color:#c9d1dc;color:#171b21}
+.tier--diamond .tier__button{background:#b9dfef;border-color:#b9dfef;color:#10202a}
+.tier--gold .tier__button:hover{background:#e7ca91;border-color:#e7ca91;color:#1c160d}
+.tier--platinum .tier__button:hover{background:#e0e6ee;border-color:#e0e6ee;color:#171b21}
+.tier--diamond .tier__button:hover{background:#d5f0fc;border-color:#d5f0fc;color:#10202a}
+.tier .tier__button:active{transform:translateY(1px)}
