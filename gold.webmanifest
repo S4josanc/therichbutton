@@ -1,0 +1,17 @@
+{
+  "name": "I am Rich · Gold Preview",
+  "short_name": "I am Rich",
+  "start_url": "/gold.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090909",
+  "theme_color": "#090909",
+  "icons": [
+    {
+      "src": "/gold-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
