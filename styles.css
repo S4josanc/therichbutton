@@ -86,3 +86,17 @@
 .purchase-dialog #previewGift{background:transparent;border:1px solid #a88b5b;color:#e8cfa0;box-shadow:none}
 .purchase-dialog #previewGift:hover{background:#bda16b20;transform:none;box-shadow:none}
 @media(max-width:550px){.purchase-dialog-inner{padding:28px 20px}.purchase-hero{gap:15px}.purchase-coin{width:72px;height:72px;flex-basis:72px}.purchase-coin span{font-size:47px}.purchase-dialog .section-kicker{font-size:7px}}
+
+/* v0.7 mobile polish: touch-friendly, restrained and consistent */
+html{scroll-padding-top:86px}
+@media(hover:none){.tier:hover{transform:none}.tier .tier__button:hover,.tier .gift-option:hover{transform:none}.rich-button:hover{transform:none}}
+@media(max-width:760px){
+.header{height:70px;gap:10px}.brand{gap:9px}.brand__mark{font-size:36px}.brand__name{letter-spacing:.11em}.header__cta{min-height:42px;display:flex;align-items:center}.language{min-width:52px;min-height:44px}
+.hero{min-height:770px;padding-top:68px}.hero h1{font-size:clamp(58px,13.7vw,104px);line-height:.94}.hero__art{height:300px}.rich-button{width:204px;height:204px}.hero__response{padding-inline:15px;line-height:1.7}.share-button{min-height:44px}
+.tier-grid{gap:23px}.tier{border-radius:11px;padding:28px 23px 25px;min-height:535px;box-shadow:0 14px 34px #0007}.tier__button,.tier .gift-option{min-height:56px}.tier__inclusions{margin-bottom:23px}.tier__price{margin-top:23px}.tier__medal{margin-top:25px}
+.benefits-title,.lounge h2,.wealth h2{font-size:clamp(38px,10vw,57px)}.benefit-grid article{border-radius:9px;box-shadow:0 12px 25px #0004}.lounge-panel{border-radius:9px}.club__card{max-width:100%}.studio-controls input,.studio-controls select{min-height:52px}.studio-controls button{min-height:56px}.footer__links a{min-height:36px;display:inline-flex;align-items:center}
+.purchase-dialog{width:calc(100% - 22px);max-height:min(88dvh,760px);border-radius:12px;overscroll-behavior:contain}.purchase-dialog-inner{padding:28px 22px}.purchase-dialog .purchase-close{min-width:44px;min-height:44px;right:8px;top:5px}.purchase-dialog input,.purchase-dialog textarea{font-size:16px;min-height:49px;border-radius:5px}.purchase-dialog button:not(.purchase-close){min-height:52px;border-radius:6px}.purchase-gift-card{padding:22px 15px;min-height:190px}.purchase-dialog .section-kicker{padding-right:26px}.purchase-dialog .purchase-warning{font-size:10px}
+}
+@media(max-width:390px){.header__cta{padding:10px;font-size:8px}.hero__eyebrow{font-size:7px;letter-spacing:.1em}.hero h1{font-size:clamp(53px,14vw,64px)}.hero__art{height:284px}.orbit--outer{width:295px}.orbit--mid{width:255px}.orbit--inner{width:225px}.rich-button{width:187px;height:187px}.rich-button__symbol{font-size:70px}.tier{padding-inline:17px}.purchase-dialog-inner{padding:24px 16px}}
+@media(max-width:340px){.header__cta{display:none}.hero h1{font-size:50px}.hero__eyebrow{letter-spacing:.06em}.section-wrap{padding-inline:17px}}
+@media(prefers-reduced-motion:reduce){.ticker__track{animation:none}.tier .tier__button:after{display:none}}
