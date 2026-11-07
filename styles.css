@@ -57,3 +57,32 @@
 .rich-button{box-shadow:inset 0 3px 3px #fff7,inset 0 -6px 12px #3b270f88,0 22px 38px #000e,0 0 0 3px #70532b,0 0 0 8px #21180d,0 0 45px #c99e4440}
 .rich-button:hover{box-shadow:inset 0 3px 4px #fff9,inset 0 -6px 12px #3b270f88,0 28px 48px #000e,0 0 0 3px #846437,0 0 0 8px #21180d,0 0 65px #d4aa5b70}
 @media(prefers-reduced-motion:reduce){.tier .tier__button:after{display:none}}
+
+/* v0.6 - gift and checkout concept: premium presentation */
+.purchase-dialog{max-height:min(92vh,900px);overflow:auto;border-radius:13px;border:1px solid #b89a64;box-shadow:0 28px 100px #000d,0 0 0 1px #e2c8912b;background:radial-gradient(ellipse at 75% 0%,#2d271c,#131210 65%);}
+.purchase-dialog-inner{padding:38px}
+.purchase-dialog .section-kicker{justify-content:space-between;gap:12px;font-size:8px;letter-spacing:.17em}
+.purchase-hero{display:flex;align-items:center;gap:24px;margin:28px 0 20px;padding:24px 0;border-top:1px solid #bfa36a36;border-bottom:1px solid #bfa36a36}
+.purchase-coin{flex:0 0 94px;width:94px;height:94px;border-radius:50%;display:grid;place-items:center;border:2px solid #caa86e;background:radial-gradient(circle at 35% 25%,#67502e,#20190f 75%);box-shadow:inset 0 2px 9px #e2c48a42,0 0 0 6px #caa86e15,0 9px 23px #0009}
+.purchase-coin span{font:400 60px var(--serif);color:#e6c78c;text-shadow:0 2px 3px #0007}
+.purchase-dialog[data-tier=platinum] .purchase-coin{border-color:#cbd5e2;background:radial-gradient(circle at 35% 25%,#5d6470,#1b2027 75%)}
+.purchase-dialog[data-tier=platinum] .purchase-coin span{color:#e4e9f0}
+.purchase-dialog[data-tier=diamond] .purchase-coin{border-color:#b6e6fa;background:radial-gradient(circle at 35% 25%,#456f84,#14242d 75%)}
+.purchase-dialog[data-tier=diamond] .purchase-coin span{color:#e2f6ff}
+.purchase-eyebrow{font-size:9px;letter-spacing:.22em;color:#c5a778;font-weight:700}
+.purchase-dialog h2{font-size:clamp(28px,5vw,39px);margin:9px 0 4px}
+.purchase-subline{font-size:9px!important;letter-spacing:.13em;color:#a79d8a!important;margin:0}
+.purchase-dialog #purchaseDescription{font:italic 18px/1.55 var(--serif);color:#d8cbb2;margin:18px 0}
+.purchase-gift-card{margin:24px 0 25px;padding:24px 22px;background:radial-gradient(circle at 50% 25%,#342c20,#0d0d0d 75%);border:1px solid #c5a571;outline:1px solid #c5a57142;outline-offset:-8px;text-align:center;min-height:210px;display:flex;flex-direction:column;align-items:center;gap:11px}
+.purchase-gift-card[hidden]{display:none}
+.purchase-gift-card>span,.purchase-gift-card small{color:#c6aa77;font-size:9px;letter-spacing:.18em;font-weight:700}
+.purchase-gift-card__gem{font-size:28px;color:#e2c38b}
+.purchase-gift-card strong{font:italic 23px var(--serif);color:#f1e6d1;overflow-wrap:anywhere;max-width:100%}
+.purchase-gift-card p{font:italic 15px/1.5 var(--serif)!important;color:#d1b98c!important;margin:0!important;overflow-wrap:anywhere}
+.purchase-dialog[data-tier=platinum] .purchase-gift-card{border-color:#b7c6d5}
+.purchase-dialog[data-tier=diamond] .purchase-gift-card{border-color:#a4d9ef}
+.purchase-dialog .purchase-warning{border-top:1px solid #bca06f30;padding-top:17px;letter-spacing:.09em;line-height:1.7}
+.purchase-dialog button:not(.purchase-close){min-height:48px}
+.purchase-dialog #previewGift{background:transparent;border:1px solid #a88b5b;color:#e8cfa0;box-shadow:none}
+.purchase-dialog #previewGift:hover{background:#bda16b20;transform:none;box-shadow:none}
+@media(max-width:550px){.purchase-dialog-inner{padding:28px 20px}.purchase-hero{gap:15px}.purchase-coin{width:72px;height:72px;flex-basis:72px}.purchase-coin span{font-size:47px}.purchase-dialog .section-kicker{font-size:7px}}
