@@ -1,0 +1,34 @@
+name: Build iPhone Gold icon
+on:
+  push:
+    paths:
+      - gold-icon.svg
+      - .github/workflows/build-gold-icon.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-icon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image renderer
+        run: pip install cairosvg pillow
+      - name: Render dedicated Apple PNG icon
+        run: |
+          python - <<'PY'
+          import cairosvg
+          from PIL import Image
+          from io import BytesIO
+          source=open('gold-icon.svg','rb').read()
+          for name,size in [('gold-apple-touch-icon.png',180),('gold-icon-192.png',192),('gold-icon-512.png',512)]:
+              png=cairosvg.svg2png(bytestring=source,output_width=size,output_height=size)
+              im=Image.open(BytesIO(png)).convert('RGB')
+              im.save(name,format='PNG',optimize=True)
+          PY
+      - name: Publish icon assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gold-apple-touch-icon.png gold-icon-192.png gold-icon-512.png
+          if ! git diff --cached --quiet; then git commit -m "Publish Gold Apple touch icon"; git push; fi
