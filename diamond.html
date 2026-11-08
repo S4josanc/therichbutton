@@ -96,6 +96,30 @@ body{background:radial-gradient(ellipse 92% 58% at 50% 43%,#132e54 0%,#091527 35
 .diamond-prism{position:absolute;z-index:3;inset:9%;border-radius:50%;pointer-events:none;background:conic-gradient(from 10deg,transparent 0 12%,#9ceeff12 15%,transparent 21% 45%,#c9f9ff16 48%,transparent 54% 76%,#9ceeff14 80%,transparent 85%);animation:prism-turn 18s linear infinite}
 @keyframes prism-turn{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.diamond-prism{animation:none}}
+/* Diamond mobile cinema: preserve the desktop composition */
+@media(max-width:600px){
+main{padding:calc(env(safe-area-inset-top) + 19px) 17px calc(env(safe-area-inset-bottom) + 18px);min-height:100dvh}
+.top{width:100%;gap:8px}.brand{font-size:8px;letter-spacing:.17em}.edition{font-size:8px;letter-spacing:.1em;padding:8px}
+.eyebrow{margin-top:clamp(23px,5dvh,42px);font-size:8px}
+.heading{font-size:clamp(40px,11vw,55px);margin-top:12px}
+.luxury-line{font-size:8px;letter-spacing:.12em;gap:7px;margin-top:9px}
+.luxury-line:before,.luxury-line:after{width:24px}
+.subtitle{font-size:11px;max-width:310px;line-height:1.5}
+.stage{width:100%;flex:1 1 auto;min-height:320px;max-height:490px;margin:0 auto;overflow:visible}
+.stage:before{width:min(115vw,510px);aspect-ratio:1;opacity:.9;-webkit-mask-image:radial-gradient(circle,transparent 16%,#000 39%,transparent 75%);mask-image:radial-gradient(circle,transparent 16%,#000 39%,transparent 75%)}
+.aura{width:min(105vw,450px)}.orbit{width:min(90vw,380px)}
+.jewel{width:min(72vw,310px);max-width:310px}
+.monogram{font-size:clamp(140px,36vw,190px)}
+.collector-serial{top:17%;left:0;font-size:7px;letter-spacing:.08em}
+.collector-serial--right{left:auto;right:0}
+.collector-label{bottom:8%;font-size:10px}
+.status{font-size:8px;letter-spacing:.14em}
+.message{font-size:clamp(16px,4.4vw,19px);margin-top:9px;min-height:42px}
+.bottom{padding-top:10px}.bottom small{font-size:7px}
+}
+@media(max-width:600px) and (max-height:740px){
+.eyebrow{margin-top:10px}.stage{min-height:265px;max-height:350px}.jewel{width:min(60vw,250px)}.orbit{width:min(77vw,310px)}.aura{width:min(85vw,340px)}.collector-label{bottom:5%}.heading{font-size:38px}
+}
 </style></head><body>
 <main><div class="top enter"><span class="brand">THE RICH BUTTON®</span><span class="edition">DIAMOND · PRIVATE PREVIEW</span></div><div class="eyebrow enter">THE ART OF OWNING NOTHING</div><h1 class="heading enter">I am Rich.</h1><div class="luxury-line enter"><span class="crown-mark">✦</span> THE DIAMOND COLLECTION <span class="crown-mark">✦</span></div><p class="subtitle enter">Some things money can't buy. This isn't one of them.</p>
 <div class="stage"><span class="collector-serial" aria-hidden="true">EDITION 01</span><span class="collector-serial collector-serial--right" aria-hidden="true">DIAMOND SERIES</span><div class="particle-field" id="ambient" aria-hidden="true"></div><div class="aura"></div><div class="orbit"></div><button id="button" class="jewel" aria-label="Press the luxury diamond button"><span class="face"><span class="diamond-prism"></span><span class="monogram">R</span></span></button><div class="collector-label" aria-hidden="true">DIAMOND</div></div>
