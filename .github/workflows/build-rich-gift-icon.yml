@@ -1,0 +1,34 @@
+name: Build iPhone Rich Gift icon
+on:
+  push:
+    paths:
+      - rich-gift-icon.svg
+      - .github/workflows/build-rich-gift-icon.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-icon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image renderer
+        run: pip install cairosvg pillow
+      - name: Render dedicated Apple PNG icon
+        run: |
+          python - <<'PY'
+          import cairosvg
+          from PIL import Image
+          from io import BytesIO
+          source=open('rich-gift-icon.svg','rb').read()
+          for name,size in [('rich-gift-apple-touch-icon.png',180),('rich-gift-icon-192.png',192),('rich-gift-icon-512.png',512)]:
+              png=cairosvg.svg2png(bytestring=source,output_width=size,output_height=size)
+              im=Image.open(BytesIO(png)).convert('RGB')
+              im.save(name,format='PNG',optimize=True)
+          PY
+      - name: Publish icon assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rich-gift-apple-touch-icon.png rich-gift-icon-192.png rich-gift-icon-512.png
+          if ! git diff --cached --quiet; then git commit -m "Publish Rich Gift Apple touch icon"; git push; fi
