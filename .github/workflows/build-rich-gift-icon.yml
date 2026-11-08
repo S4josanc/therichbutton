@@ -31,4 +31,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add rich-gift-apple-touch-icon.png rich-gift-icon-192.png rich-gift-icon-512.png
-          if ! git diff --cached --quiet; then git commit -m "Publish Rich Gift Apple touch icon"; git push; fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish Rich Gift Apple touch icon"
+            for attempt in 1 2 3; do
+              git pull --rebase origin main && git push origin HEAD:main && exit 0
+              sleep 4
+            done
+            exit 1
+          fi
