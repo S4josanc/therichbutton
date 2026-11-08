@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="I am Rich">
+<link rel="icon" href="diamond-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" sizes="180x180" href="/diamond-apple-touch-icon.png?v=2"><link rel="manifest" href="diamond.webmanifest"><title>I am Rich · Diamond Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap');
+:root{color-scheme:dark;--gold:#e9c47e;--muted:#988363}*{box-sizing:border-box}html{height:100%;background:#050505}body{margin:0;min-height:100%;font-family:'DM Sans',sans-serif;color:#f3e6cc;background:radial-gradient(ellipse 75% 44% at 50% 47%,#2c2011 0%,#0d0b09 52%,#050505 100%);overflow-x:hidden}body:before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.25;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.14'/%3E%3C/svg%3E")}main{position:relative;min-height:100dvh;max-width:650px;margin:auto;padding:max(28px,env(safe-area-inset-top)) 22px max(25px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;text-align:center;isolation:isolate}.top{width:100%;display:flex;justify-content:space-between;align-items:center}.brand{font-size:9px;letter-spacing:.26em;font-weight:700;color:#d7bd8b}.edition{font-size:9px;letter-spacing:.18em;border:1px solid #8d6c3b;padding:9px 11px;color:#e6c789}.eyebrow{margin-top:clamp(30px,6dvh,65px);font-size:9px;letter-spacing:.28em;color:#b89a67}.heading{font:italic clamp(43px,9vw,61px)/1.12 'Playfair Display',Georgia,serif;font-weight:400;margin:12px 0 6px;color:#f7ebd3}.subtitle{font:12px/1.6 'DM Sans',sans-serif;color:#a99b83;margin:5px 0 0}.stage{width:100%;position:relative;flex:1;min-height:355px;display:grid;place-items:center;perspective:900px}.aura{position:absolute;width:min(92vw,490px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#c68a3140 0%,#a2701b13 38%,transparent 68%);filter:blur(14px);animation:breathe 6s ease-in-out infinite;pointer-events:none}.orbit{position:absolute;width:min(86vw,440px);aspect-ratio:1;border:1px solid #e4bc6630;border-radius:50%;pointer-events:none}.orbit:before{content:'';position:absolute;inset:15px;border:1px solid #e4bc661b;border-radius:50%}.jewel{position:relative;display:grid;place-items:center;width:min(70vw,326px);aspect-ratio:1;border:0;border-radius:50%;padding:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;filter:drop-shadow(0 27px 23px #000b);transform:translateY(-5px);transition:transform .15s ease,filter .3s}.jewel:before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from -40deg,#ffefb4,#a66c23 13%,#f6d58d 24%,#5c3710 34%,#fff0bc 47%,#9d6925 61%,#e8b75b 75%,#59350d 87%,#ffe7a0);box-shadow:inset 0 3px 5px #fff9,inset 0 -10px 15px #3d230d,0 12px 0 #58370e,0 20px 14px #000b}.jewel:after{content:'';position:absolute;inset:14px;border-radius:50%;border:2px solid #f6d99599;box-shadow:inset 0 6px 10px #fff7,inset 0 -14px 18px #241406,0 0 0 2px #52340e;background:radial-gradient(circle at 33% 24%,#f9e0a2,#c28a37 37%,#8d591e 70%,#482a0d)}.face{position:absolute;z-index:2;inset:23px;border-radius:50%;overflow:hidden;display:grid;place-items:center;border:1px solid #f9e5b57a;background:radial-gradient(ellipse at 30% 22%,#34291c,#0a0a09 62%,#201709);box-shadow:inset 0 0 25px #000e}.face:before{content:'';position:absolute;inset:-80%;background:linear-gradient(108deg,transparent 42%,#fff8d300 46%,#fff9d54a 50%,#fff9d300 54%,transparent 59%);transform:translateX(-65%) rotate(0deg);animation:sheen 4.8s ease-in-out infinite}.face:after{content:'';position:absolute;inset:9px;border:1px solid #c69a4b6b;border-radius:50%}.monogram{filter:drop-shadow(0 0 12px #ffdf874a);font:italic clamp(142px,37vw,200px)/1 Georgia,serif;color:#f4d394;z-index:1;text-shadow:1px 1px #fff5cf,3px 5px 0 #80511c,6px 9px 9px #000;transform:translate(-7px,-4px)}.gem{position:absolute;z-index:3;right:22%;top:22%;width:33px;height:33px;filter:drop-shadow(0 0 9px #ffdc8c);background:linear-gradient(145deg,#fff8da,#efc15e 35%,#996317 80%);clip-path:polygon(50% 0,90% 30%,50% 100%,10% 30%);border:1px solid #fff}.jewel:focus-visible{outline:3px solid #ffe4a0;outline-offset:10px}.jewel:active,.jewel.pressed{transform:translateY(8px) scale(.975);filter:drop-shadow(0 8px 10px #000b)}.jewel:active:before,.jewel.pressed:before{box-shadow:inset 0 3px 6px #fff9,inset 0 -10px 15px #3d230d,0 4px 0 #58370e,0 7px 10px #000b}.spark{position:absolute;left:50%;top:50%;z-index:5;width:5px;height:5px;background:#ffe6a4;border-radius:50%;pointer-events:none;box-shadow:0 0 12px 3px #ffd27b;animation:burst .85s ease-out forwards}.status{font:9px 'DM Sans',sans-serif;letter-spacing:.25em;color:#b6a083}.message{min-height:52px;margin:14px 0 0;font:italic 19px/1.4 'Playfair Display',Georgia,serif;color:#e9d6b4;transition:opacity .2s}.bottom{width:100%;margin-top:auto;padding-top:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #c39d5030}.bottom small{font-size:8px;letter-spacing:.14em;color:#938269}.details{background:transparent;color:#d5b983;border:0;padding:12px 4px;font-size:10px;letter-spacing:.12em;cursor:pointer}.panel{position:fixed;z-index:20;inset:0;background:#050505f5;display:none;align-items:center;justify-content:center;padding:25px}.panel.open{display:flex}.panel-inner{max-width:430px;width:100%;padding:35px 25px;border:1px solid #b48a4d;background:radial-gradient(circle at top,#292014,#0d0c0a);text-align:left}.panel h2{font:italic 30px Georgia;margin:0 0 18px}.panel p{font-size:13px;line-height:1.8;color:#c2b397}.panel a{color:#e6c587}.panel button{padding:13px 18px;border:1px solid #b48a4d;background:#d2ae70;color:#17100a;font-weight:700;margin-top:15px}.notice{font-size:10px;color:#ac9b7e;line-height:1.7}.enter{animation:enter .85s both}@keyframes enter{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}@keyframes breathe{50%{opacity:.45;transform:scale(1.12)}}@keyframes sheen{0%,30%{transform:translateX(-75%)}65%,100%{transform:translateX(75%)}}@keyframes burst{to{opacity:0;transform:translate(var(--x),var(--y)) scale(.2)}}@media(max-height:710px){.eyebrow{margin-top:15px}.stage{min-height:300px}.jewel{width:min(58vw,280px)}.orbit{width:min(74vw,355px)}.aura{width:min(84vw,400px)}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+/* GOLD EXPERIENCE 3.0 — cinematic atelier */
+body{background:radial-gradient(ellipse 90% 55% at 50% 45%,#493013 0%,#170f08 31%,#050505 74%);}
+main{overflow:hidden}
+.stage{isolation:isolate;min-height:390px}
+.stage:before{content:"";position:absolute;width:min(130vw,660px);aspect-ratio:1;z-index:-1;background:repeating-conic-gradient(from 0deg,#f2bc4512 0deg 1deg,transparent 1deg 14deg);-webkit-mask-image:radial-gradient(circle,transparent 22%,#000 43%,transparent 73%);mask-image:radial-gradient(circle,transparent 22%,#000 43%,transparent 73%);animation:halo-turn 45s linear infinite;pointer-events:none}
+.stage:after{content:"";position:absolute;width:min(92vw,490px);height:120px;bottom:2%;z-index:-1;background:radial-gradient(ellipse,#e8a94945,transparent 70%);filter:blur(25px);pointer-events:none}
+.orbit{border-color:#ffd57e55;box-shadow:0 0 30px #c18d2b17,inset 0 0 25px #e4b25718;animation:orbit-pulse 5s ease-in-out infinite}
+.orbit:after{content:"";position:absolute;left:50%;top:-3px;width:7px;height:7px;border-radius:50%;background:#fff3c9;box-shadow:0 0 15px 5px #e8bc61;animation:orbit-turn 13s linear infinite;transform-origin:0 calc(min(86vw,440px)/2)}
+.jewel{animation:float-jewel 5s ease-in-out infinite}
+.jewel:before{background:conic-gradient(from -40deg,#fff8d5,#8d5818 12%,#ffe8a7 23%,#4e2c0a 35%,#fff4c7 48%,#a36d22 59%,#fbd888 75%,#3d2409 88%,#fff4b9);box-shadow:inset 0 3px 6px #fff9,inset 0 -10px 15px #3d230d,0 13px 0 #58370e,0 22px 24px #000b,0 0 42px #c78c2745}
+.face{background:radial-gradient(ellipse at 28% 18%,#51402b,#0a0a09 53%,#271a0b 90%)}
+.face:before{animation:sheen 3.9s ease-in-out infinite}
+.monogram{color:#ffe2a0;text-shadow:-2px -2px 0 #fff5d1,2px 2px 0 #a87831,5px 8px 1px #5a350e,8px 12px 11px #000;filter:drop-shadow(0 0 15px #ffcf7166)}
+.eyebrow{color:#f1cb84}
+.heading{text-shadow:0 0 28px #e9ae3a33}
+.luxury-line{display:flex;align-items:center;gap:12px;justify-content:center;color:#dfbd7a;font:700 9px 'DM Sans',sans-serif;letter-spacing:.22em;margin:14px 0 0}
+.luxury-line:before,.luxury-line:after{content:"";height:1px;width:54px;background:linear-gradient(90deg,transparent,#d9b16d)}
+.luxury-line:after{transform:rotate(180deg)}
+.crown-mark{font-size:19px;color:#f2d28e;text-shadow:0 0 18px #f9ca67}
+.particle-field{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:-1}
+.ambient-dot{position:absolute;left:var(--left);top:var(--top);width:var(--size);height:var(--size);border-radius:50%;background:#ffe7a6;opacity:.2;box-shadow:0 0 10px #eab95b;animation:ambient-float var(--duration) ease-in-out infinite alternate;animation-delay:var(--delay)}
+.press-ring{position:absolute;z-index:5;left:50%;top:50%;width:30px;height:30px;border:2px solid #ffe6a6;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);animation:shock 1s ease-out forwards}
+.gold-flash{position:fixed;inset:0;z-index:30;pointer-events:none;background:radial-gradient(circle at 50% 48%,#ffda8050,transparent 65%);animation:flash .7s ease-out forwards}
+.status{color:#e2c58e}
+@keyframes halo-turn{to{transform:rotate(360deg)}}@keyframes orbit-pulse{50%{opacity:.55;transform:scale(1.045)}}@keyframes orbit-turn{to{transform:rotate(360deg)}}@keyframes float-jewel{50%{transform:translateY(-11px)}}@keyframes ambient-float{to{transform:translate(20px,-35px);opacity:.55}}@keyframes shock{from{opacity:.85;width:30px;height:30px}to{opacity:0;width:min(90vw,480px);height:min(90vw,480px)}}@keyframes flash{to{opacity:0}}
+@media(max-height:710px){.stage{min-height:300px}.luxury-line{margin-top:6px}.eyebrow{margin-top:10px}}
+@media(prefers-reduced-motion:reduce){.jewel,.orbit,.stage:before,.ambient-dot{animation:none!important}}
+
+/* Gold 3.1 — restrained bespoke collector's frame */
+.collector-frame{position:absolute;inset:9px 8px 13px;border:1px solid #a982423d;pointer-events:none;z-index:0}
+.collector-frame:before,.collector-frame:after{content:"";position:absolute;width:45px;height:45px;border-color:#d7b470;opacity:.8}
+.collector-frame:before{left:-1px;top:-1px;border-left:2px solid;border-top:2px solid}
+.collector-frame:after{right:-1px;bottom:-1px;border-right:2px solid;border-bottom:2px solid}
+.collector-frame__tr,.collector-frame__bl{position:absolute;width:45px;height:45px;border-color:#d7b470;opacity:.8}
+.collector-frame__tr{right:-1px;top:-1px;border-top:2px solid;border-right:2px solid}
+.collector-frame__bl{left:-1px;bottom:-1px;border-left:2px solid;border-bottom:2px solid}
+.collector-label{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:1;white-space:nowrap;display:flex;align-items:center;gap:14px;font:500 11px 'DM Sans',sans-serif;letter-spacing:.34em;color:#e9c98d;text-shadow:0 0 16px #d6a34b66}
+.collector-label:before,.collector-label:after{content:"";display:block;width:35px;height:1px;background:linear-gradient(90deg,transparent,#d5af70)}
+.collector-label:after{transform:rotate(180deg)}
+.collector-serial{position:absolute;top:26px;left:24px;font:700 8px 'DM Sans',sans-serif;letter-spacing:.16em;color:#b29b70}
+.collector-serial--right{left:auto;right:24px}
+@media(max-width:420px){.collector-frame{inset:3px 0 7px}.collector-label{bottom:18px;font-size:10px;letter-spacing:.25em}.collector-serial{top:16px;left:14px}.collector-serial--right{left:auto;right:14px}}
+@media(max-height:710px){.collector-frame{inset:0 3px 4px}.collector-label{bottom:12px}.collector-serial{top:10px}}
+/* Diamond edition — cool polished precious metal */
+:root{--gold:#e7f1ff;--muted:#9baec2}
+body{background:radial-gradient(ellipse 90% 55% at 50% 45%,#25354c 0%,#111822 31%,#05070b 74%)}
+.brand,.edition,.eyebrow,.luxury-line,.crown-mark,.collector-label,.status,.details{color:#dcecff}
+.edition,.panel-inner{border-color:#849bb8}
+.heading{color:#f1f7ff;text-shadow:0 0 26px #a8d6ff35}
+.subtitle,.message{color:#c5d6e9}
+.orbit{border-color:#c5e1ff77;box-shadow:0 0 30px #9abfe838,inset 0 0 25px #d4ebff22}
+.orbit:after{background:#fff;box-shadow:0 0 17px 6px #a8d9ff}
+.aura{background:radial-gradient(circle,#95c8ff4d 0%,#769dc022 38%,transparent 68%)}
+.stage:before{background:repeating-conic-gradient(from 0deg,#c8e5ff1a 0deg 1deg,transparent 1deg 14deg)}
+.stage:after{background:radial-gradient(ellipse,#9bd0ff55,transparent 70%)}
+.jewel:before{background:conic-gradient(from -40deg,#fff,#6f879f 12%,#f0f7ff 23%,#35485e 35%,#fff 48%,#8ca4bd 59%,#dceaf8 75%,#354050 88%,#fff);box-shadow:inset 0 3px 6px #fff,inset 0 -10px 15px #1d2d3f,0 13px 0 #43566b,0 22px 24px #000b,0 0 42px #9bcaff55}
+.jewel:after{background:radial-gradient(circle at 33% 24%,#fff,#afc2d5 37%,#71869e 70%,#253449);border-color:#e9f4ff}
+.face{background:radial-gradient(ellipse at 28% 18%,#344253,#070b10 53%,#182638 90%);border-color:#e3f2ff}
+.face:after{border-color:#adc8e8}
+.monogram{color:#f4faff;text-shadow:-2px -2px 0 #fff,2px 2px 0 #91a7bc,5px 8px 1px #4b6075,8px 12px 11px #000;filter:drop-shadow(0 0 15px #cce8ff88)}
+.ambient-dot,.spark{background:#f0f9ff;box-shadow:0 0 12px #b5ddff}
+.press-ring{border-color:#dceeff}
+.gold-flash{background:radial-gradient(circle at 50% 48%,#c0e1ff66,transparent 65%)}
+.luxury-line:before,.luxury-line:after,.collector-label:before,.collector-label:after{background:linear-gradient(90deg,transparent,#c9dcef)}
+.collector-serial{color:#a5bed7}
+.bottom{border-color:#aec9e344}
+
+/* Diamond — deep sapphire, cut crystal and restrained spectral light */
+body{background:radial-gradient(ellipse 92% 58% at 50% 43%,#132e54 0%,#091527 35%,#03060d 78%)}
+.brand,.edition,.eyebrow,.luxury-line,.crown-mark,.collector-label,.status,.details{color:#b7e6ff}
+.edition,.panel-inner{border-color:#569cdd}
+.heading{color:#f0fbff;text-shadow:0 0 35px #5fc3ff70}
+.subtitle,.message{color:#b9d9ef}
+.orbit{border-color:#83d7ff88;box-shadow:0 0 38px #2e9bff44,inset 0 0 26px #8ae3ff40}
+.orbit:after{background:#e8ffff;box-shadow:0 0 20px 7px #49b8ff}
+.aura{background:radial-gradient(circle,#3aabff6b 0%,#1d5fb32a 40%,transparent 70%)}
+.stage:before{background:repeating-conic-gradient(from 0deg,#7dd8ff29 0deg 1deg,transparent 1deg 14deg)}
+.stage:after{background:radial-gradient(ellipse,#38aaff70,transparent 72%)}
+.jewel:before{background:conic-gradient(from -40deg,#e6fbff,#3b86b9 12%,#ffffff 23%,#123d73 35%,#a8eaff 48%,#3877ba 59%,#e6ffff 75%,#133e77 88%,#e6fbff);box-shadow:inset 0 3px 8px #fff,inset 0 -10px 15px #102c5b,0 13px 0 #1c487c,0 22px 24px #000b,0 0 65px #329cff77}
+.jewel:after{background:conic-gradient(from 25deg,#e7ffff,#8ed5ff,#3169b7,#e6ffff,#3278b4,#b2f3ff,#e7ffff);border-color:#e8fbff}
+.face{background:radial-gradient(ellipse at 28% 18%,#294e80,#050c19 53%,#122d50 90%);border-color:#c7f3ff}
+.face:after{border-color:#69bfff}
+.monogram{color:#e4faff;text-shadow:-2px -2px 0 #fff,2px 2px 0 #8cdaff,5px 8px 1px #1b67aa,8px 12px 11px #000;filter:drop-shadow(0 0 19px #55caffaa)}
+.ambient-dot,.spark{background:#e7fbff;box-shadow:0 0 16px #6edaff}
+.press-ring{border-color:#b4eeff}
+.gold-flash{background:radial-gradient(circle at 50% 48%,#69caff88,transparent 68%)}
+.luxury-line:before,.luxury-line:after,.collector-label:before,.collector-label:after{background:linear-gradient(90deg,transparent,#a3e4ff)}
+.collector-serial{color:#83bde3}.bottom{border-color:#8acfff55}
+.diamond-prism{position:absolute;z-index:3;inset:9%;border-radius:50%;pointer-events:none;background:conic-gradient(from 10deg,transparent 0 12%,#9ceeff12 15%,transparent 21% 45%,#c9f9ff16 48%,transparent 54% 76%,#9ceeff14 80%,transparent 85%);animation:prism-turn 18s linear infinite}
+@keyframes prism-turn{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.diamond-prism{animation:none}}
+</style></head><body>
+<main><div class="top enter"><span class="brand">THE RICH BUTTON®</span><span class="edition">DIAMOND · PRIVATE PREVIEW</span></div><div class="eyebrow enter">THE ART OF OWNING NOTHING</div><h1 class="heading enter">I am Rich.</h1><div class="luxury-line enter"><span class="crown-mark">✦</span> THE DIAMOND COLLECTION <span class="crown-mark">✦</span></div><p class="subtitle enter">Some things money can't buy. This isn't one of them.</p>
+<div class="stage"><span class="collector-serial" aria-hidden="true">EDITION 01</span><span class="collector-serial collector-serial--right" aria-hidden="true">DIAMOND SERIES</span><div class="particle-field" id="ambient" aria-hidden="true"></div><div class="aura"></div><div class="orbit"></div><button id="button" class="jewel" aria-label="Press the luxury diamond button"><span class="face"><span class="diamond-prism"></span><span class="monogram">R</span></span></button><div class="collector-label" aria-hidden="true">DIAMOND</div></div>
+<div class="status" id="status">TOUCH THE DIAMOND</div><p class="message" id="message" aria-live="polite">Because you can.</p>
+<div class="bottom"><small>© THE RICH BUTTON · 2026</small><button class="details" id="details">THE DETAILS +</button></div>
+</main>
+<div class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle"><div class="panel-inner"><h2 id="panelTitle">Diamond Edition</h2><p>A little luxury. Absolutely no purpose.</p><p class="notice">This is a free visual preview, not a purchased membership. No ownership or status is verified.</p><p>To add it to your iPhone: open this page in Chrome or Safari, tap Share, then Add to Home Screen.</p><p><a href="./">Return to The Rich Button</a></p><button id="close" type="button">CLOSE</button></div></div>
+<script>
+const button=document.getElementById('button'),message=document.getElementById('message'),status=document.getElementById('status'),panel=document.getElementById('panel');let presses=0;const lines=['You have achieved absolutely nothing.','A magnificent waste of a perfectly good tap.','Still rich. Still unnecessary.','A moment of pure extravagance.','Nothing happened. Beautifully.','Because you can.'];const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;const ambient=document.getElementById('ambient');if(!reduce){for(let i=0;i<34;i++){const d=document.createElement('i');d.className='ambient-dot';d.style.setProperty('--left',(5+Math.random()*90)+'%');d.style.setProperty('--top',(5+Math.random()*90)+'%');d.style.setProperty('--size',(1+Math.random()*2.5)+'px');d.style.setProperty('--duration',(4+Math.random()*7)+'s');d.style.setProperty('--delay',(-Math.random()*10)+'s');ambient.appendChild(d)}}button.addEventListener('click',()=>{presses++;status.textContent=presses===1?'YOUR FIRST COMPLETELY USELESS PRESS':presses+' PRESSINGS. ZERO ACHIEVEMENTS.';message.style.opacity='0';requestAnimationFrame(()=>{message.textContent=lines[(presses-1)%lines.length];message.style.opacity='1'});button.classList.add('pressed');setTimeout(()=>button.classList.remove('pressed'),170);if(navigator.vibrate)navigator.vibrate(12);if(!reduce){const ring=document.createElement('span');ring.className='press-ring';button.parentNode.appendChild(ring);setTimeout(()=>ring.remove(),1100);const flash=document.createElement('span');flash.className='gold-flash';document.body.appendChild(flash);setTimeout(()=>flash.remove(),750);for(let i=0;i<28;i++){const p=document.createElement('i');p.className='spark';const angle=i*Math.PI*2/16+(Math.random()-.5)*.4;const radius=120+Math.random()*135;p.style.setProperty('--x',Math.cos(angle)*radius+'px');p.style.setProperty('--y',Math.sin(angle)*radius+'px');button.parentNode.appendChild(p);setTimeout(()=>p.remove(),900)}}});document.getElementById('details').addEventListener('click',()=>{panel.classList.add('open');document.getElementById('close').focus()});document.getElementById('close').addEventListener('click',()=>panel.classList.remove('open'));panel.addEventListener('click',e=>{if(e.target===panel)panel.classList.remove('open')});document.addEventListener('keydown',e=>{if(e.key==='Escape')panel.classList.remove('open')});
+</script></body></html>
