@@ -1,0 +1,26 @@
+{
+  "name": "The Rich Gift · Preview",
+  "short_name": "Rich Gift",
+  "start_url": "/rich-gift-button.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080608",
+  "theme_color": "#080608",
+  "icons": [
+    {
+      "src": "/rich-gift-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/rich-gift-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/rich-gift-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
