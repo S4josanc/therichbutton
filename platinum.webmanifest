@@ -1,0 +1,26 @@
+{
+  "name": "I am Rich · Platinum Preview",
+  "short_name": "I am Rich",
+  "start_url": "/platinum.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#05070b",
+  "theme_color": "#05070b",
+  "icons": [
+    {
+      "src": "/platinum-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/platinum-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/platinum-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
