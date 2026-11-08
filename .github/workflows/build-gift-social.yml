@@ -1,0 +1,31 @@
+name: Build gift social preview image
+on:
+  push:
+    paths:
+      - gift-social.svg
+      - .github/workflows/build-gift-social.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SVG renderer
+        run: pip install cairosvg
+      - name: Render Open Graph PNG
+        run: python -c "import cairosvg; cairosvg.svg2png(url='gift-social.svg',write_to='gift-social.png',output_width=1200,output_height=630)"
+      - name: Publish image
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gift-social.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish gift social preview PNG"
+            for attempt in 1 2 3; do
+              git pull --rebase origin main && git push origin HEAD:main && exit 0
+              sleep 4
+            done
+            exit 1
+          fi
