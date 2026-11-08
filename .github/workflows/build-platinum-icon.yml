@@ -1,0 +1,34 @@
+name: Build iPhone Platinum icon
+on:
+  push:
+    paths:
+      - platinum-icon.svg
+      - .github/workflows/build-platinum-icon.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-icon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image renderer
+        run: pip install cairosvg pillow
+      - name: Render dedicated Apple PNG icon
+        run: |
+          python - <<'PY'
+          import cairosvg
+          from PIL import Image
+          from io import BytesIO
+          source=open('platinum-icon.svg','rb').read()
+          for name,size in [('platinum-apple-touch-icon.png',180),('platinum-icon-192.png',192),('platinum-icon-512.png',512)]:
+              png=cairosvg.svg2png(bytestring=source,output_width=size,output_height=size)
+              im=Image.open(BytesIO(png)).convert('RGB')
+              im.save(name,format='PNG',optimize=True)
+          PY
+      - name: Publish icon assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add platinum-apple-touch-icon.png platinum-icon-192.png platinum-icon-512.png
+          if ! git diff --cached --quiet; then git commit -m "Publish Platinum Apple touch icon"; git push; fi
