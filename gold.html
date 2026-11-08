@@ -32,9 +32,25 @@ main{overflow:hidden}
 @keyframes halo-turn{to{transform:rotate(360deg)}}@keyframes orbit-pulse{50%{opacity:.55;transform:scale(1.045)}}@keyframes orbit-turn{to{transform:rotate(360deg)}}@keyframes float-jewel{50%{transform:translateY(-11px)}}@keyframes ambient-float{to{transform:translate(20px,-35px);opacity:.55}}@keyframes shock{from{opacity:.85;width:30px;height:30px}to{opacity:0;width:min(90vw,480px);height:min(90vw,480px)}}@keyframes flash{to{opacity:0}}
 @media(max-height:710px){.stage{min-height:300px}.luxury-line{margin-top:6px}.eyebrow{margin-top:10px}}
 @media(prefers-reduced-motion:reduce){.jewel,.orbit,.stage:before,.ambient-dot{animation:none!important}}
+
+/* Gold 3.1 — restrained bespoke collector's frame */
+.collector-frame{position:absolute;inset:9px 8px 13px;border:1px solid #a982423d;pointer-events:none;z-index:0}
+.collector-frame:before,.collector-frame:after{content:"";position:absolute;width:45px;height:45px;border-color:#d7b470;opacity:.8}
+.collector-frame:before{left:-1px;top:-1px;border-left:2px solid;border-top:2px solid}
+.collector-frame:after{right:-1px;bottom:-1px;border-right:2px solid;border-bottom:2px solid}
+.collector-frame__tr,.collector-frame__bl{position:absolute;width:45px;height:45px;border-color:#d7b470;opacity:.8}
+.collector-frame__tr{right:-1px;top:-1px;border-top:2px solid;border-right:2px solid}
+.collector-frame__bl{left:-1px;bottom:-1px;border-left:2px solid;border-bottom:2px solid}
+.collector-label{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:1;white-space:nowrap;display:flex;align-items:center;gap:14px;font:500 11px 'DM Sans',sans-serif;letter-spacing:.34em;color:#e9c98d;text-shadow:0 0 16px #d6a34b66}
+.collector-label:before,.collector-label:after{content:"";display:block;width:35px;height:1px;background:linear-gradient(90deg,transparent,#d5af70)}
+.collector-label:after{transform:rotate(180deg)}
+.collector-serial{position:absolute;top:26px;left:24px;font:700 8px 'DM Sans',sans-serif;letter-spacing:.16em;color:#b29b70}
+.collector-serial--right{left:auto;right:24px}
+@media(max-width:420px){.collector-frame{inset:3px 0 7px}.collector-label{bottom:18px;font-size:10px;letter-spacing:.25em}.collector-serial{top:16px;left:14px}.collector-serial--right{left:auto;right:14px}}
+@media(max-height:710px){.collector-frame{inset:0 3px 4px}.collector-label{bottom:12px}.collector-serial{top:10px}}
 </style></head><body>
 <main><div class="top enter"><span class="brand">THE RICH BUTTON®</span><span class="edition">GOLD · PRIVATE PREVIEW</span></div><div class="eyebrow enter">THE ART OF OWNING NOTHING</div><h1 class="heading enter">I am Rich.</h1><div class="luxury-line enter"><span class="crown-mark">✦</span> THE GOLD COLLECTION <span class="crown-mark">✦</span></div><p class="subtitle enter">Some things money can't buy. This isn't one of them.</p>
-<div class="stage"><div class="particle-field" id="ambient" aria-hidden="true"></div><div class="aura"></div><div class="orbit"></div><button id="button" class="jewel" aria-label="Press the luxury gold button"><span class="face"><span class="monogram">R</span></span></button></div>
+<div class="stage"><div class="collector-frame" aria-hidden="true"><span class="collector-frame__tr"></span><span class="collector-frame__bl"></span></div><span class="collector-serial" aria-hidden="true">EDITION 01</span><span class="collector-serial collector-serial--right" aria-hidden="true">GOLD SERIES</span><div class="particle-field" id="ambient" aria-hidden="true"></div><div class="aura"></div><div class="orbit"></div><button id="button" class="jewel" aria-label="Press the luxury gold button"><span class="face"><span class="monogram">R</span></span></button><div class="collector-label" aria-hidden="true">GOLD</div></div>
 <div class="status" id="status">TOUCH THE GOLD</div><p class="message" id="message" aria-live="polite">Because you can.</p>
 <div class="bottom"><small>© THE RICH BUTTON · 2026</small><button class="details" id="details">THE DETAILS +</button></div>
 </main>
