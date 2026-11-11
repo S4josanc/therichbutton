@@ -99,7 +99,7 @@ document.addEventListener('click',function(event){
   const gift=trigger.hasAttribute('data-gift');
   const modal=document.getElementById('purchaseDialog');
   if(!modal)return;
-  const prices={gold:49,platinum:199,diamond:999};
+  const prices={gold:499,platinum:1999,diamond:9999};
   if(!prices[tier])return;
   const es=document.documentElement.lang==='es';
   document.getElementById('purchaseTitle').textContent=tier.toUpperCase()+' · €'+prices[tier];
