@@ -15,3 +15,46 @@
 /* v0.9: gift reveal preview, deliberately without payment or real redemption */
 (()=>{const launch=document.getElementById('openGrandReveal'),dialog=document.getElementById('revealDialog'),envelope=document.getElementById('envelopeButton');if(!launch||!dialog||!envelope)return;const close=document.getElementById('closeReveal'),replay=document.getElementById('replayReveal'),hint=document.getElementById('revealHint'),purchase=document.getElementById('purchaseDialog');const lang=()=>document.documentElement.lang==='es'?'es':'en';function words(en,es){return lang()==='es'?es:en}function reset(){envelope.classList.remove('is-open');replay.hidden=true;hint.textContent=words('TOUCH THE SEAL TO OPEN YOUR GIFT','TOCA EL SELLO PARA ABRIR TU REGALO')}launch.addEventListener('click',()=>{const tier=purchase.dataset.tier||'gold',name=document.getElementById('giftRecipient').value.trim(),message=document.getElementById('giftMessage').value.trim();document.getElementById('revealName').textContent=name||words('A VERY FORTUNATE PERSON','UNA PERSONA MUY AFORTUNADA');document.getElementById('revealTier').textContent=tier.toUpperCase()+words(' EDITION',' · EDICIÓN');document.getElementById('revealMessage').textContent=message||words('Some gifts are useful. This is more interesting.','Algunos regalos son útiles. Este es más interesante.');document.getElementById('revealHeading').textContent=words('Something wonderfully unnecessary.','Algo maravillosamente innecesario.');document.querySelector('.reveal-eyebrow').textContent=words('THE RICH BUTTON® · A PRIVATE GIFT','THE RICH BUTTON® · UN REGALO PRIVADO');document.querySelector('.reveal-disclaimer').textContent=words('A PREVIEW ONLY · NO PURCHASE OR DELIVERY','SOLO UNA DEMOSTRACIÓN · SIN COMPRA NI ENVÍO');document.querySelector('.envelope-letter small').textContent=words('DEMONSTRATION · NO MEMBERSHIP ISSUED','DEMOSTRACIÓN · SIN MEMBRESÍA EMITIDA');replay.textContent=words('↻ REPLAY THE REVEAL','↻ VOLVER A ABRIR');dialog.dataset.tier=tier;reset();purchase.close();dialog.showModal()});envelope.addEventListener('click',()=>{if(envelope.classList.contains('is-open'))return;envelope.classList.add('is-open');hint.textContent=words('A PRICELESS MOMENT. ALMOST.','UN MOMENTO QUE NO TIENE PRECIO. CASI.');replay.hidden=false});replay.addEventListener('click',reset);close.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()})})();
 
+
+/* Localize remaining editorial text; no purchase behaviour is changed. */
+(()=>{
+  const words={
+    '.hero__gift-cta small':['PERSONALIZED DIGITAL GIFT · €49 · PREVIEW AVAILABLE','REGALO DIGITAL PERSONALIZADO · 49 € · VISTA PREVIA DISPONIBLE'],
+    '.gift-feature__eyebrow':['A LITTLE SOMETHING FOR SOMEONE WHO HAS EVERYTHING','UN DETALLE PARA QUIEN YA LO TIENE TODO'],
+    '.gift-feature__desc':['The gift of absolutely nothing. Beautifully presented, surprisingly memorable, and entirely unnecessary.','El regalo de absolutamente nada. Una presentación elegante, sorprendentemente memorable y completamente innecesaria.'],
+    '.gift-feature__link':['DISCOVER THE RICH GIFT ↗','DESCUBRE THE RICH GIFT ↗'],
+    '.gift-feature__secondary':['PREVIEW A PERSONALIZED GIFT ↗','VISTA PREVIA DE UN REGALO PERSONALIZADO ↗'],
+    '.richest__eyebrow':['THE ONE-OF-ONE COLLECTION','LA COLECCIÓN DE UNA SOLA PIEZA'],
+    '.richest__status':['ILLUSTRATIVE OWNER · NOT A VERIFIED PURCHASE','PROPIETARIO ILUSTRATIVO · COMPRA NO VERIFICADA'],
+    '.throne-caption':['ONE THRONE. ONE OWNER.','UN TRONO. UN PROPIETARIO.'],
+    '.throne-kicker':['THE ULTIMATE STATUS SYMBOL','EL SÍMBOLO DEFINITIVO DE ESTATUS'],
+    '.throne-subtitle':['There can only be one.','Solo puede haber uno.'],
+    '.throne-owner-label':['FEATURED OWNER · PREVIEW','PROPIETARIO DESTACADO · VISTA PREVIA'],
+    '.throne-price > div:nth-child(2) > span':['NEXT MINIMUM · IF VERIFIED','SIGUIENTE MÍNIMO · SI SE VERIFICA'],
+    '.throne-explain':['Take the title by paying at least €1 more than the current owner. Your name and country are optional; the amount paid is always public.','Consigue el título pagando al menos 1 € más que el propietario actual. Tu nombre y país son opcionales; la cantidad pagada siempre será pública.'],
+    '.throne-consent span':['Email me if someone takes my throne. I can unsubscribe anytime.','Avísame por correo si alguien ocupa mi trono. Puedo darme de baja en cualquier momento.'],
+    '#throneEmailNote':['Email alerts will be available after verified purchases launch. No address is collected yet.','Los avisos por correo estarán disponibles cuando se activen las compras verificadas. Por ahora no recogemos direcciones.'],
+    '.throne-bottom a':['EXPLORE THE CROWN EXPERIENCE ↗','DESCUBRE LA EXPERIENCIA DE LA CORONA ↗'],
+    '.throne-bottom > span':['CLAIM THE THRONE · COMING SOON','OCUPA EL TRONO · PRÓXIMAMENTE'],
+    '.throne-bottom small':['PREVIEW ONLY · NO PAYMENTS ENABLED','SOLO VISTA PREVIA · PAGOS NO ACTIVADOS'],
+    '.lounge-panel p':['“Congratulations. You\'re the most exclusive member of the club. Unfortunately, you\'re also the only one.”','«Enhorabuena. Eres el miembro más exclusivo del club. Por desgracia, también eres el único».'],
+    '.lounge-panel small':['CONCEPT PREVIEW · NO ACTIVE MEMBERS','VISTA PREVIA · SIN MIEMBROS ACTIVOS'],
+    '.footer__links a[href="#certificate-studio"]':['THE COLLECTION','LA COLECCIÓN'],
+    '.footer__links a[href="vault.html"]':['MY PRIVATE VAULT','MI CAJA FUERTE PRIVADA']
+  };
+  function update(){
+    const es=document.documentElement.lang==='es', i=es?1:0;
+    for(const [selector,text] of Object.entries(words)){
+      const node=document.querySelector(selector);if(node)node.textContent=text[i];
+    }
+    const hero=document.querySelector('.hero__gift-cta');
+    if(hero&&hero.firstChild&&hero.firstChild.nodeType===3)hero.firstChild.nodeValue=es?'DESCUBRE THE RICH GIFT ':'EXPLORE THE RICH GIFT ';
+    const email=document.querySelector('label[for="throneEmail"]');
+    if(email&&email.firstChild&&email.firstChild.nodeType===3)email.firstChild.nodeValue=es?'TU CORREO ':'YOUR EMAIL ';
+    const optional=email&&email.querySelector('span');if(optional)optional.textContent=es?'(OPCIONAL)':'(OPTIONAL)';
+    const name=document.querySelector('#certificateName');if(name)name.placeholder=es?'Tu distinguido nombre':'Your distinguished name';
+    const amount=document.getElementById('publicThroneAmountLabel');if(amount)amount.textContent=amount.dataset.verified==='true'?(es?'CANTIDAD PAGADA VERIFICADA':'VERIFIED AMOUNT PAID'):(es?'CANTIDAD ILUSTRATIVA · NO VERIFICADA':'ILLUSTRATIVE AMOUNT · NOT VERIFIED');
+  }
+  document.getElementById('language')?.addEventListener('click',update);
+  update();
+})();
