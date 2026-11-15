@@ -1,0 +1,18 @@
+{
+  "rich-gift": {
+    "amount_eur": 49,
+    "url": "https://buy.stripe.com/5kQ3cw0ALgCjbFR5MV9AA0m"
+  },
+  "gold": {
+    "amount_eur": 499,
+    "url": "https://buy.stripe.com/9B67sMabl99RcJV4IR9AA0n"
+  },
+  "platinum": {
+    "amount_eur": 1999,
+    "url": "https://buy.stripe.com/aFa14o83deub7pBfnv9AA0o"
+  },
+  "diamond": {
+    "amount_eur": 9999,
+    "url": "https://buy.stripe.com/00w9AUdnxgCj7pB4IR9AA0p"
+  }
+}
