@@ -1,0 +1,12 @@
+# All functions use server-side authentication suited to their purpose.
+# Public state is intentionally readable; checkout requires the site's public
+# API key + allowed Origin + rate limiting; order status additionally requires
+# an unguessable private order token; webhook uses Stripe's signed raw payload.
+[functions.rich-throne-public]
+verify_jwt = false
+[functions.rich-throne-checkout]
+verify_jwt = false
+[functions.rich-throne-order-status]
+verify_jwt = false
+[functions.rich-throne-webhook]
+verify_jwt = false
