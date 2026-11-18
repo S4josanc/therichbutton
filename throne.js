@@ -10,6 +10,20 @@
   const euro = n => new Intl.NumberFormat(language() === 'es' ? 'es-ES' : 'en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2, minimumFractionDigits: Number.isInteger(Number(n)) ? 0 : 2 }).format(Number(n));
   const put = (id, value) => { if ($(id)) $(id).textContent = value; };
   const text = value => typeof value === 'string' ? value : '';
+  const isGermany = country => /^(de|deu|germany|alemania|deutschland|🇩🇪)$/i.test(text(country).trim());
+  function countryNode(country) {
+    if (!isGermany(country)) return document.createTextNode(text(country));
+    const flag = document.createElement('img');
+    flag.src = 'assets/flags/de.svg';
+    flag.alt = tr('Germany', 'Alemania');
+    flag.title = flag.alt;
+    flag.width = 30; flag.height = 18;
+    flag.style.cssText = 'display:inline-block;vertical-align:middle;border:1px solid #bfa87f66;border-radius:2px;box-sizing:content-box';
+    return flag;
+  }
+  function putCountry(id, country) {
+    if ($(id)) $(id).replaceChildren(countryNode(country));
+  }
   let current = null;
   let order = null;
   let loading = false;
@@ -73,7 +87,7 @@
     const ownerLabel = current.verified ? tr('CURRENT OWNER · PAYMENT VERIFIED', 'PROPIETARIO ACTUAL · PAGO VERIFICADO') : tr('INAUGURAL OWNER', 'PROPIETARIO INAUGURAL');
     const amountLabel = current.verified ? tr('AMOUNT PAID', 'IMPORTE PAGADO') : tr('INITIAL AMOUNT', 'IMPORTE INICIAL');
     put('publicThroneOwner', name);
-    put('publicThroneCountry', country);
+    putCountry('publicThroneCountry', country);
     put('publicThroneAmount', euro(current.amount));
     put('publicThroneNext', euro(current.next_minimum));
     put('publicThroneAmountLabel', amountLabel);
@@ -226,7 +240,7 @@
     put('orderTitle', message[0]); put('orderMessage', message[1]);
     if (verified) {
       put('keepsakeName', text(order.display_name) || tr('Anonymous owner', 'Propietario anónimo'));
-      put('keepsakeCountry', text(order.country));
+      putCountry('keepsakeCountry', order.country);
       put('keepsakeAmount', euro(order.amount));
       put('keepsakeStatus', order.is_current_owner ? tr('CURRENT OWNER', 'PROPIETARIO ACTUAL') : tr('THE CROWN COLLECTION', 'LA COLECCIÓN DE LA CORONA'));
       put('keepsakeDate', order.paid_at ? new Date(order.paid_at).toLocaleDateString(language() === 'es' ? 'es-ES' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '');
@@ -291,9 +305,11 @@
     const country = text(current.country);
     const badge = current.verified ? tr('CURRENT OWNER · PAYMENT VERIFIED', 'PROPIETARIO ACTUAL · PAGO VERIFICADO') : tr('INAUGURAL OWNER · INITIAL AMOUNT', 'PROPIETARIO INAUGURAL · IMPORTE INICIAL');
     put('crownBadge', badge); put('crownName', name); put('crownDetailName', name);
-    put('crownCountry', country); put('crownAmount', euro(current.amount)); put('crownDetailAmount', euro(current.amount)); put('crownMinimum', euro(current.next_minimum));
+    putCountry('crownCountry', country); put('crownAmount', euro(current.amount)); put('crownDetailAmount', euro(current.amount)); put('crownMinimum', euro(current.next_minimum));
     put('crownAmountLabel', current.verified ? tr('AMOUNT PAID', 'IMPORTE PAGADO') : tr('INITIAL AMOUNT', 'IMPORTE INICIAL'));
-    put('coronationName', name); put('coronationAmount', [euro(current.amount), country].filter(Boolean).join(' · ')); put('coronationStatus', badge); put('crownWatermark', badge);
+    put('coronationName', name);
+    $('coronationAmount').replaceChildren(document.createTextNode(euro(current.amount) + (country ? ' · ' : '')), countryNode(country));
+    put('coronationStatus', badge); put('crownWatermark', badge);
     put('crownDetailText', current.verified ? tr('The current holder of The Richest Button. A new confirmed payment of at least ', 'El propietario actual de The Richest Button. Un nuevo pago confirmado de al menos ') + euro(current.next_minimum) + tr(' can take the crown.', ' puede conseguir la corona.') : name + tr(' opens the collection at ', ' abre la colección con ') + euro(current.amount) + tr('. Take the crown with a verified payment of at least ', '. Consigue la corona con un pago verificado de al menos ') + euro(current.next_minimum) + '.');
     $('download').disabled = false; $('replay').disabled = false;
   }
@@ -316,7 +332,16 @@
     line(tr('I OWN THE', 'EL TRONO'), h * .37, 65 * scale, '#f8e3b8', 'Georgia', true);
     line(tr('THRONE.', 'ES MÍO.'), h * .45, 90 * scale, '#f8e3b8', 'Georgia', true);
     line(text(current.name) || tr('Anonymous', 'Anónimo'), h * .58, 53 * scale, '#fff0d0');
-    line(text(current.country), h * .64, 24 * scale, '#cbb18a', 'Arial');
+    if (isGermany(current.country)) {
+      const flagWidth = 72 * scale, flagHeight = flagWidth * .6;
+      const flagX = (w - flagWidth) / 2, flagY = h * .64 - flagHeight / 2;
+      ['#000000', '#dd0000', '#ffce00'].forEach((color, i) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(flagX, flagY + i * flagHeight / 3, flagWidth, flagHeight / 3);
+      });
+      ctx.strokeStyle = '#bfa87f'; ctx.lineWidth = 1;
+      ctx.strokeRect(flagX, flagY, flagWidth, flagHeight);
+    } else line(text(current.country), h * .64, 24 * scale, '#cbb18a', 'Arial');
     line(euro(current.amount), h * .77, 120 * scale, '#f2d18b');
     line(tr('THINK YOU CAN TAKE MY CROWN?', '¿CREES QUE PUEDES QUITARME LA CORONA?'), h * .85, 21 * scale, '#d6bb8b', 'Arial');
     line('THERICHBUTTON.COM', h * .92, 20 * scale, '#d9bd8b', 'Arial');
