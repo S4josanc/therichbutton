@@ -6,10 +6,12 @@ const session = { id: 'cs_live_123456789012345', payment_link: 'plink_1Uc13YLqa8
 assert.equal(validatePaidSession(session).edition, 'gold');
 for (const bad of [{payment_status:'unpaid'}, {amount_total:49}, {livemode:false}, {payment_link:'plink_unknown'}, {currency:'usd'}, {status:'open'}]) assert.equal(validatePaidSession({...session,...bad}), null);
 let saved=null;
-const db={from(){return {select(){return {eq(){return {maybeSingle:async()=>({data:saved,error:null})}}}},insert:async row=>{saved={...row,access_token:'b0d942e8-ef0d-4b2b-92bf-a1dfe9ac761e'};return {error:null}}}}};
+const db={from(){return {select(){const filters=[];const query={eq(key,value){filters.push([key,value]);return query},maybeSingle:async()=>({data:saved&&filters.every(([key,value])=>saved[key]===value)?saved:null,error:null})};return query},insert:async row=>{saved={...row,access_token:'b0d942e8-ef0d-4b2b-92bf-a1dfe9ac761e'};return {error:null}}}}};
 const handler=createHandler({stripe:{checkout:{sessions:{retrieve:async()=>session}}},db});
 const request=body=>new Request('https://example.test',{method:'POST',headers:{origin:'https://therichbutton.com','content-type':'application/json'},body:JSON.stringify(body)});
 let r=await handler(request({session_id:session.id}));assert.equal(r.status,200);let result=await r.json();assert.equal(result.edition,'gold');assert.ok(result.token);
 r=await handler(request({session_id:'cs_live_123456789012345'}));assert.equal(r.status,200);assert.equal((await r.json()).token,result.token);
+r=await handler(request({token:result.token}));assert.equal(r.status,200);assert.equal((await r.json()).edition,'gold');
+saved.status='refunded';r=await handler(request({token:result.token}));assert.equal(r.status,404);
 r=await handler(new Request('https://example.test',{method:'POST',headers:{origin:'https://attacker.test'},body:'{}'}));assert.equal(r.status,403);
 console.log('Paid session checks, repeat handling, and origin rejection passed');
