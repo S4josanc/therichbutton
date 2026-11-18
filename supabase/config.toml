@@ -10,3 +10,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.rich-throne-webhook]
 verify_jwt = false
+
+# rich-admin validates the bearer token with Auth and restricts access to the
+# confirmed administrator before any action, including Wall ordering.
+[functions.rich-admin]
+verify_jwt = false
