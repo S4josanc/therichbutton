@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-const source = await readFile(new URL('./index.js', import.meta.url), 'utf8');
+const source = await readFile(new URL('../supabase/functions/rich-edition-access/handler.js', import.meta.url), 'utf8');
 const { validatePaidSession, createHandler } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 const session = { id: 'cs_live_123456789012345', payment_link: 'plink_1Uc13YLqa85X23XWz0MWwicl', livemode: true, mode: 'payment', status: 'complete', payment_status: 'paid', currency: 'eur', amount_total: 49900 };
 assert.equal(validatePaidSession(session).edition, 'gold');
