@@ -4,12 +4,16 @@ const PRODUCTS = Object.freeze({
   plink_1Uc16lLqa85X23XWZ2ewpcpd: { edition: 'diamond', cents: 999900 },
 });
 
-export function validatePaidSession(session) {
+function validEditionSession(session) {
   const link = typeof session?.payment_link === 'string' ? session.payment_link : session?.payment_link?.id;
   const product = PRODUCTS[link];
   if (!product || session.livemode !== true || session.mode !== 'payment' || session.status !== 'complete' ||
-      session.payment_status !== 'paid' || session.currency !== 'eur' || session.amount_total !== product.cents) return null;
+      session.currency !== 'eur' || session.amount_total !== product.cents) return null;
   return product;
+}
+
+export function validatePaidSession(session) {
+  return session?.payment_status === 'paid' ? validEditionSession(session) : null;
 }
 
 export function createHandler({ stripe, db }) {
@@ -33,6 +37,7 @@ export function createHandler({ stripe, db }) {
       if (typeof id !== 'string' || !/^cs_live_[A-Za-z0-9]{15,200}$/.test(id)) return response({ error: 'Invalid session' }, 400);
       const session = await stripe.checkout.sessions.retrieve(id);
       const product = validatePaidSession(session);
+      if (session.id === id && validEditionSession(session) && session.payment_status === 'unpaid') return response({ status: 'pending' }, 202);
       if (!product || session.id !== id) return response({ error: 'Payment not confirmed' }, 409);
       let found = await db.from('rich_edition_orders').select('edition,status,access_token').eq('stripe_session_id', id).maybeSingle();
       if (found.error) throw Error('Lookup failed');
