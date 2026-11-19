@@ -1,0 +1,10 @@
+import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createHandler } from "./handler.js";
+const key = Deno.env.get("STRIPE_SECRET_KEY") || "";
+const url = Deno.env.get("SUPABASE_URL") || "";
+const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+if (!/^(sk|rk)_live_/.test(key) || !url || !serviceKey) throw new Error("Edition access is not configured");
+const stripe = new Stripe(key, { apiVersion: "2024-12-18.acacia" });
+const db = createClient(url, serviceKey, { auth: { persistSession: false } });
+Deno.serve(createHandler({ stripe, db }));
