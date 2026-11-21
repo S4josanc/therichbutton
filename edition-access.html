@@ -1,5 +1,181 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Your Rich Button</title><style>
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#302617,#090909 65%);color:#f3e5ce;font-family:Arial,sans-serif;text-align:center;min-height:100vh}header{padding:24px;border-bottom:1px solid #a1835355;text-align:left}header a{color:#e4c897;text-decoration:none;font:italic 28px Georgia}main{max-width:720px;margin:auto;padding:55px 20px}.eyebrow{color:#d9b87e;font-size:12px;letter-spacing:.18em}h1{font:italic clamp(36px,7vw,56px)/1.15 Georgia;margin:22px 0;color:#f1ddba}p{font-size:16px;line-height:1.7;color:#cbbba1}.button{display:grid;place-items:center;margin:40px auto 20px;width:190px;height:190px;border-radius:50%;border:10px ridge #d5b478;background:radial-gradient(circle at 35% 20%,#f6dca6,#9c7b43 65%,#60451e);color:#392810;font:92px Georgia;box-shadow:0 12px 35px #000b;cursor:pointer}.button[data-edition=platinum]{border-color:#c5cbd0;background:radial-gradient(circle at 35% 20%,#f1f4f5,#8d999f 65%,#46515c)}.button[data-edition=diamond]{border-color:#a5d0e3;background:radial-gradient(circle at 35% 20%,#e2faff,#73b3cc 65%,#356c87)}.actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:28px}button.action{padding:15px 20px;border:1px solid #c4a16d;border-radius:4px;background:transparent;color:#f0d8b0;cursor:pointer;font-size:14px}button.action:first-child{background:#d6b375;color:#20170d;font-weight:bold}button:focus-visible{outline:3px solid #f7ddb1;outline-offset:4px}#notice{font-size:14px;overflow-wrap:anywhere}[hidden]{display:none!important}footer{padding:30px;color:#a68f69;font-size:12px}
-</style></head><body><header><a href="./" aria-label="The Rich Button home">R.</a></header><main><span class="eyebrow">THE RICH BUTTON · YOUR EDITION</span><h1 id="title">Confirming your payment…</h1><p id="message" role="status" aria-live="polite">Please keep this page open while we prepare your button.</p><section id="ready" hidden><button id="button" class="button" aria-label="Press your Rich Button">R</button><p id="response" aria-live="polite">Go ahead. Press it.</p><div class="actions"><button class="action" id="copy" type="button">COPY PRIVATE LINK</button><button class="action" id="download" type="button">DOWNLOAD PRIVATE LINK</button></div><p id="notice">Save your private link somewhere safe to return to your button. Anyone with the link can open it.</p></section></main><footer>THE RICH BUTTON · BECAUSE YOU CAN.</footer><script>
-(()=>{const title=document.getElementById('title'),message=document.getElementById('message'),ready=document.getElementById('ready'),params=new URLSearchParams(location.search),session=params.get('session_id'),token=params.get('token');let privateUrl='',attempts=0;async function load(){if(!session&&!token){title.textContent='Your private link is missing.';message.textContent='Use the link you saved after purchase, or contact support@therichbutton.com.';return}try{const r=await fetch('https://mhrebbssqamkuulzqcki.supabase.co/functions/v1/rich-edition-access',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify(token?{token}:{session_id:session})});const d=await r.json();if(r.status===202&&d.status==='pending'){title.textContent='Your payment is being confirmed.';message.textContent='Please keep this page open. We will check again automatically; do not pay again.';if(++attempts<24){setTimeout(load,5000)}else{message.textContent='Your payment is still being confirmed. Keep your Stripe receipt and contact support@therichbutton.com before paying again.'}return}if(!r.ok)throw Error(d.error||'Unable to confirm payment.');if(!['gold','platinum','diamond'].includes(d.edition)||!d.token)throw Error('Your button is not ready yet.');privateUrl=location.origin+location.pathname+'?token='+encodeURIComponent(d.token);history.replaceState(null,'',privateUrl);title.textContent='Your '+d.edition.charAt(0).toUpperCase()+d.edition.slice(1)+' Button is ready.';message.textContent='Your payment has been confirmed. Your button is waiting.';document.getElementById('button').dataset.edition=d.edition;ready.hidden=false}catch(e){title.textContent='We could not confirm your button yet.';message.textContent='Keep your Stripe receipt and contact support@therichbutton.com before paying again.'}}document.getElementById('button').onclick=()=>{document.getElementById('response').textContent='Nothing happened. Perfect.'};document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(privateUrl);document.getElementById('notice').textContent='Private link copied. Keep it somewhere safe.'}catch{document.getElementById('notice').textContent='Copy and save this private link: '+privateUrl}};document.getElementById('download').onclick=()=>{const url=URL.createObjectURL(new Blob(['THE RICH BUTTON · PRIVATE LINK\n\n'+privateUrl+'\n\nAnyone with this link can open your button. Keep it safe.\n'],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='rich-button-private-link.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};load()})();
-</script></body></html>
+button.secondary{color:#e3cba0;border-color:#8e7753}#shareActions{margin-top:12px}#notice{min-height:1.5em}.private-note{font-size:14px}a{color:#e4c897}
+</style></head>
+<body>
+<header><a href="./" aria-label="The Rich Button home">R.</a></header>
+<main>
+  <span class="eyebrow">THE RICH BUTTON · YOUR EDITION</span>
+  <h1 id="title">Confirming your payment…</h1>
+  <p id="message" role="status" aria-live="polite">Please keep this page open while we prepare your button.</p>
+  <button id="retry" class="action" type="button" hidden>CHECK AGAIN</button>
+  <section id="ready" hidden>
+    <button id="button" class="button" type="button" aria-label="Press your Rich Button">R</button>
+    <p id="response" aria-live="polite">Go ahead. Press it.</p>
+    <div class="actions">
+      <button class="action" id="copy" type="button">COPY PRIVATE LINK</button>
+      <button class="action" id="download" type="button">DOWNLOAD PRIVATE LINK</button>
+    </div>
+    <p class="private-note">Keep this link to return to your button. Anyone you share it with can open your edition.</p>
+    <div class="actions" id="shareActions">
+      <button class="action secondary" id="share" type="button" hidden>SHARE LINK</button>
+      <button class="action secondary" id="whatsapp" type="button">WHATSAPP</button>
+      <button class="action secondary" id="email" type="button">EMAIL</button>
+    </div>
+    <p id="notice" role="status" aria-live="polite"></p>
+  </section>
+  <p id="help" hidden>Need a hand? Keep your Stripe receipt and <a href="mailto:support@therichbutton.com">contact support</a> before paying again.</p>
+</main>
+<footer>THE RICH BUTTON · BECAUSE YOU CAN.</footer>
+<script>
+(() => {
+  const endpoint = 'https://mhrebbssqamkuulzqcki.supabase.co/functions/v1/rich-edition-access';
+  const editions = new Map([['gold', 'Gold'], ['platinum', 'Platinum'], ['diamond', 'Diamond']]);
+  const tokenPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const sessionPattern = /^cs_live_[a-zA-Z0-9]{15,200}$/;
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+  const session = params.get('session_id');
+  const title = document.getElementById('title');
+  const message = document.getElementById('message');
+  const ready = document.getElementById('ready');
+  const retry = document.getElementById('retry');
+  const help = document.getElementById('help');
+  const notice = document.getElementById('notice');
+  const share = document.getElementById('share');
+  let privateUrl = '';
+  let editionName = '';
+  let checks = 0;
+  let loading = false;
+
+  function showProblem(text, canRetry = false) {
+    title.textContent = 'We could not open your button.';
+    message.textContent = text;
+    retry.hidden = !canRetry;
+    help.hidden = false;
+  }
+
+  async function load() {
+    if (loading || privateUrl) return;
+    const valid = token !== null ? tokenPattern.test(token) : sessionPattern.test(session || '');
+    if (!valid) {
+      showProblem('Open the full private link you saved, or return using the confirmation link from your purchase.');
+      return;
+    }
+    loading = true;
+    retry.hidden = true;
+    help.hidden = true;
+    title.textContent = token ? 'Opening your button…' : 'Confirming your payment…';
+    message.textContent = 'Please keep this page open.';
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify(token !== null ? { token } : { session_id: session })
+      });
+      if (response.status === 429 || response.status >= 500) {
+        showProblem('Your access could not be checked just now. Please try again in a moment.', true);
+        return;
+      }
+      if (!response.ok) {
+        showProblem('Check the private link you opened. If you have already paid, keep your receipt.');
+        return;
+      }
+      const data = await response.json();
+      if (response.status === 202 && data?.status === 'pending') {
+        title.textContent = 'Your payment is being confirmed.';
+        message.textContent = 'We will check again shortly. Please do not pay again.';
+        if (++checks < 24) {
+          setTimeout(load, 5000);
+        } else {
+          retry.hidden = false;
+          help.hidden = false;
+          message.textContent = 'Your payment is still being confirmed. You can check again here.';
+        }
+        return;
+      }
+      if (response.status !== 200 || !editions.has(data?.edition) ||
+          typeof data.token !== 'string' || !tokenPattern.test(data.token) ||
+          (token !== null && data.token.toLowerCase() !== token.toLowerCase())) {
+        showProblem('We could not verify this private link. Please check the address you opened.');
+        return;
+      }
+      editionName = editions.get(data.edition);
+      const url = new URL(location.pathname, location.origin);
+      url.searchParams.set('token', data.token);
+      privateUrl = url.href;
+      try { history.replaceState(null, '', privateUrl); } catch { /* Some embedded browsers restrict history changes. */ }
+      title.textContent = 'Your ' + editionName + ' Button is ready.';
+      message.textContent = 'Your payment has been confirmed.';
+      document.getElementById('button').dataset.edition = data.edition;
+      share.hidden = typeof navigator.share !== 'function';
+      ready.hidden = false;
+    } catch {
+      showProblem('We could not reach the confirmation service. Please try again in a moment.', true);
+    } finally {
+      loading = false;
+    }
+  }
+
+  retry.addEventListener('click', () => {
+    checks = 0;
+    load();
+  });
+
+  document.getElementById('button').addEventListener('click', () => {
+    if (privateUrl) document.getElementById('response').textContent = 'Nothing happened. Perfect.';
+  });
+
+  document.getElementById('copy').addEventListener('click', async () => {
+    if (!privateUrl) return;
+    try {
+      await navigator.clipboard.writeText(privateUrl);
+      notice.textContent = 'Private link copied.';
+    } catch {
+      notice.textContent = 'Copy and save this private link: ' + privateUrl;
+    }
+  });
+
+  document.getElementById('download').addEventListener('click', () => {
+    if (!privateUrl) return;
+    const contents = ['THE RICH BUTTON · ' + editionName.toUpperCase(), '', privateUrl, '',
+      'Anyone with this link can open your button. Keep it somewhere safe.'].join('\n');
+    const fileUrl = URL.createObjectURL(new Blob([contents], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = 'rich-button-private-link.txt';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+    notice.textContent = 'Your private link is ready to download.';
+  });
+
+  share.addEventListener('click', async () => {
+    if (!privateUrl || typeof navigator.share !== 'function') return;
+    try {
+      await navigator.share({ title: 'The ' + editionName + ' Button', url: privateUrl });
+    } catch (error) {
+      if (error.name !== 'AbortError') notice.textContent = 'You can also copy the link or share it by WhatsApp or email.';
+    }
+  });
+
+  document.getElementById('whatsapp').addEventListener('click', () => {
+    if (!privateUrl) return;
+    const target = new URL('https://api.whatsapp.com/send');
+    target.searchParams.set('text', 'Open the ' + editionName + ' Button: ' + privateUrl);
+    window.open(target.href, '_blank', 'noopener,noreferrer');
+  });
+
+  document.getElementById('email').addEventListener('click', () => {
+    if (!privateUrl) return;
+    const subject = encodeURIComponent('The ' + editionName + ' Button');
+    const body = encodeURIComponent('Here is the private link to the ' + editionName + ' Button:\n\n' + privateUrl);
+    location.href = 'mailto:?subject=' + subject + '&body=' + body;
+  });
+
+  load();
+})();
+</script>
+</body></html>
