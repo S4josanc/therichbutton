@@ -1,4 +1,5 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { readMetaReport } from "./meta-report.ts";
 const origin="https://therichbutton.com";
 const headers={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json","Cache-Control":"no-store"};
 const reply=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers});
@@ -26,6 +27,12 @@ Deno.serve(async(req:Request)=>{
  if(payload.action==="wall_add"){const display_name=String(payload.display_name||"").trim().slice(0,60),edition=String(payload.edition||"");if(!display_name||!["rich-gift","gold","platinum","diamond"].includes(edition))return reply({error:"Name and edition required"},400);const country_code=String(payload.country_code||"").trim().toUpperCase()||null;if(country_code&&!/^[A-Z]{2}$/.test(country_code))return reply({error:"Invalid country code"},400);const {error}=await db.from("rich_wall_entries").insert({display_name,edition,country_code});if(error)return reply({error:"Could not add entry"},500);return reply({ok:true})}
  if(payload.action==="wall_update"){const id=String(payload.id||"");const display_name=String(payload.display_name||"").trim();const edition=String(payload.edition||"");const country_code=String(payload.country_code||"").trim().toUpperCase()||null;if(!/^[0-9a-f-]{36}$/i.test(id)||!display_name||display_name.length>60||!["rich-gift","gold","platinum","diamond"].includes(edition)||(country_code&&!/^[A-Z]{2}$/.test(country_code)))return reply({error:"Invalid name, edition or country code"},400);const {data,error}=await db.from("rich_wall_entries").update({display_name,edition,country_code}).eq("id",id).select("id").maybeSingle();if(error)return reply({error:"Could not update entry"},500);if(!data)return reply({error:"Entry not found"},404);return reply({ok:true})}
  if(payload.action==="wall_remove"){const id=String(payload.id||"");if(!/^[0-9a-f-]{36}$/i.test(id))return reply({error:"Invalid entry"},400);const {error}=await db.from("rich_wall_entries").delete().eq("id",id);if(error)return reply({error:"Could not remove entry"},500);return reply({ok:true})}
+ if (payload.action === "meta_report") {
+   const meta = await readMetaReport(
+     Deno.env.get("WINDSOR_API_KEY"), Deno.env.get("RICH_META_PURCHASE_VERIFIED_FROM"),
+   );
+   return reply({ meta });
+ }
  if (payload.action === "campaign_report") {
    const { data, error } = await db.rpc("rich_campaign_report");
    if (error) return reply({ error: "Campaign report unavailable" }, 503);
