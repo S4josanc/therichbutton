@@ -15,3 +15,10 @@ verify_jwt = false
 # confirmed administrator before any action, including Wall ordering.
 [functions.rich-admin]
 verify_jwt = false
+
+# Preserve the currently deployed gateway configuration for these existing
+# storefront functions. Each handler validates the origin and request type.
+[functions.rich-analytics]
+verify_jwt = false
+[functions.rich-gift-checkout]
+verify_jwt = false
