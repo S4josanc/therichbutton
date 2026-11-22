@@ -6,8 +6,8 @@
     ['vault-v1-miami', 'miami'],
     ['vault-v1-dubai', 'dubai'],
     ['vault-v1-london', 'london'],
-    ['vault-v1-singapore', 'singapore'],
-    ['vault-v1-sydney', 'sydney'],
+    ['vault-v1-new-york', 'new-york'],
+    ['vault-v1-los-angeles', 'los-angeles'],
   ]);
   const home = current.pathname === '/' || current.pathname === '/index.html';
 

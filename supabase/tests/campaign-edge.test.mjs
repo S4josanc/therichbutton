@@ -45,6 +45,14 @@ async function analyticsFixture(errors = []) {
   return { rows, post: await loadHandler("rich-analytics", db) };
 }
 
+test("records the two new city codes and drops the two retired codes", async () => {
+  const { rows, post } = await analyticsFixture();
+  for (const code of ["vault-v1-new-york", "vault-v1-los-angeles", "vault-v1-singapore", "vault-v1-sydney"]) {
+    assert.equal((await post({ event: "page_view", page: "home", campaign_ad: code })).status, 204);
+  }
+  assert.deepEqual(rows.map(row => row.campaign_ad), ["vault-v1-new-york", "vault-v1-los-angeles", undefined, undefined]);
+});
+
 test("tags only homepage visits and drops arbitrary fields and ad strings", async () => {
   const { rows, post } = await analyticsFixture();
   const visit = { event: "page_view", page: "home" };

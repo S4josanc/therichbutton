@@ -9,7 +9,7 @@ const campaign = read('campaign.js');
 const home = read('index.html');
 const gift = read('gift.html');
 const overview = read('rich-gift.html');
-const cityNames = ['miami', 'dubai', 'london', 'singapore', 'sydney'];
+const cityNames = ['miami', 'new-york', 'los-angeles', 'dubai', 'london'];
 const base = 'https://therichbutton.com';
 const sampleAnchors = html => [...html.matchAll(/<a\b[^>]*?\bhref="([^"]+)"/gi)].map(match => match[1]);
 function tag(city) {
@@ -51,7 +51,7 @@ test('each tagged landing records one existing page view with one public ad code
 
 test('every published CSV destination resolves to its own browser, edge and database ad label', () => {
   const entries = read('campaigns/christmas-2026.csv').trim().split('\n').slice(1);
-  const catalogueSQL = read('supabase/sql/campaign-attribution.sql');
+  const catalogueSQL = read('supabase/sql/campaign-attribution.sql') + '\n' + read('supabase/sql/christmas-2026-cities.sql');
   const seen = new Set();
   for (const entry of entries) {
     const [campaignName, ad, city, destination] = entry.split(',');
@@ -60,7 +60,7 @@ test('every published CSV destination resolves to its own browser, edge and data
     assert.equal(url.pathname, '/');
     assert.equal(url.searchParams.get('utm_campaign'), campaignName);
     assert.equal(url.searchParams.get('utm_content'), ad);
-    assert.equal(url.searchParams.get('utm_term'), city.toLowerCase());
+    assert.equal(url.searchParams.get('utm_term'), city.toLowerCase().replaceAll(' ', '-'));
     assert.equal(url.searchParams.size, 5);
     const request = runPage(url.pathname + url.search).requests[0];
     assert.equal(JSON.parse(request.body).campaign_ad, ad);
@@ -75,6 +75,7 @@ test('every published CSV destination resolves to its own browser, edge and data
 test('organic, incomplete, duplicate, unknown, mismatched, test and private entries keep the old payload', () => {
   const bad = ['', 'trb_ad=vault-v1-dubai', 'utm_campaign=christmas_2026',
     tag('miami') + '&utm_source=meta', tag('london') + '&utm_content=vault-v1-london', tag('paris').toString(),
+    tag('singapore').toString(), tag('sydney').toString(),
     tag('dubai').toString().replace('utm_term=dubai','utm_term=miami'), tag('dubai') + '&order=test-token',
     tag('dubai') + '&stripe_test=1', tag('miami') + '#gift=private',
     tag('miami') + '&referral=test-ref', tag('miami') + '&referral_kind=paid',
@@ -112,11 +113,11 @@ test('no ad code crosses origins, goes into a gift, or overrides a checkout or r
 });
 
 test('paid gift checkout carries the allowed code including after cancellation; test and private flows omit it', () => {
-  const regular = '/gift.html?tier=rich-gift&trb_ad=vault-v1-singapore';
+  const regular = '/gift.html?tier=rich-gift&trb_ad=vault-v1-new-york';
   const bare = checkoutBody(runPage('/gift.html'));
   assert.deepEqual(bare, {recipient:'Test recipient',sender:'Test sender',message:'Test message',wall_opt_in:false,wall_alias:null});
   for (const suffix of ['', '&checkout=cancelled']) {
-    assert.deepEqual(checkoutBody(runPage(regular + suffix)), {...bare,campaign_ad:'vault-v1-singapore'});
+    assert.deepEqual(checkoutBody(runPage(regular + suffix)), {...bare,campaign_ad:'vault-v1-new-york'});
   }
   for (const suffix of ['&order=token','&referral_kind=paid','&stripe_test=1','&trb_ad=vault-v1-miami',
     '&complimentary=token','&session_id=fake','#gift=token', '&checkout=success']) {

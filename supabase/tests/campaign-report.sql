@@ -31,6 +31,9 @@ grant select on public.rich_analytics_events, public.rich_gift_orders to service
 \ir ../sql/campaign-attribution.sql
 \ir ../sql/campaign-attribution.sql
 
+\ir ../sql/christmas-2026-cities.sql
+\ir ../sql/christmas-2026-cities.sql
+
 begin;
 set local timezone to 'America/Los_Angeles';
 
@@ -93,8 +96,12 @@ set local role service_role;
 do $checks$
 declare result record;
 begin
-  if (select count(*) from public.rich_campaign_report()) <> 5 then
-    raise exception 'Expected a row for every registered ad';
+  if (select array_agg(target_city order by target_city) from public.rich_campaign_report())
+    is distinct from array['Dubai','London','Los Angeles','Miami','New York'] then
+    raise exception 'The dashboard must show the five active cities';
+  end if;
+  if (select count(*) from public.rich_campaign_ads where not active) <> 2 then
+    raise exception 'The two original labels must remain archived';
   end if;
   select * into strict result from public.rich_campaign_report() where ad_code = 'vault-v1-miami';
   if (result.home_views, result.checkout_starts, result.paid_gifts) <> (10002, 102, 1) then
@@ -113,6 +120,20 @@ do $checks$
 begin
   if (select paid_gifts from public.rich_campaign_report() where ad_code = 'vault-v1-miami') <> 0 then
     raise exception 'Refund was still included in paid gifts';
+  end if;
+end;
+$checks$;
+reset role;
+insert into public.rich_analytics_events (event_type, page, campaign_ad)
+values ('page_view', 'home', 'vault-v1-sydney');
+insert into public.rich_gift_orders (campaign_ad, stripe_checkout_session_id, status, paid_at)
+values ('vault-v1-singapore', 'cs_live_historical', 'paid', now());
+set local role service_role;
+do $checks$
+begin
+  if (select home_views from public.rich_campaign_report() where ad_code = 'vault-v1-sydney') is distinct from 1
+    or (select paid_gifts from public.rich_campaign_report() where ad_code = 'vault-v1-singapore') is distinct from 1 then
+    raise exception 'Archiving must preserve attributable history';
   end if;
 end;
 $checks$;

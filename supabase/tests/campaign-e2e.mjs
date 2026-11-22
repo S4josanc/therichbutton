@@ -11,8 +11,8 @@ const { parseHTML } = await import(process.env.CAMPAIGN_TEST_DOM_MODULE || 'link
 const siteRoot = new URL('../../', import.meta.url);
 const origin = 'https://therichbutton.com';
 const mockStripe = 'https://checkout.stripe.com/c/pay/mock-only';
-const ad = 'vault-v1-dubai';
-const tags = 'utm_source=meta&utm_medium=paid_social&utm_campaign=christmas_2026&utm_content=' + ad + '&utm_term=dubai';
+const ad = 'vault-v1-los-angeles';
+const tags = 'utm_source=meta&utm_medium=paid_social&utm_campaign=christmas_2026&utm_content=' + ad + '&utm_term=los-angeles';
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
 function render(url, { failedCheckout = false } = {}) {
@@ -86,7 +86,9 @@ test('tagged home → gift explainer → checkout, without leaking the full URL 
   }
   const explainerUrl = home.link('.gift-feature__link');
   assert.equal(explainerUrl, origin + '/rich-gift.html?trb_ad=' + ad);
-  const giftUrl = render(explainerUrl).link('a.button[href*="gift.html?tier="]');
+  const explainer = render(explainerUrl);
+  assert.deepEqual(explainer.events, []);
+  const giftUrl = explainer.link('a.button[href*="gift.html?tier="]');
   assert.equal(giftUrl, origin + '/gift.html?tier=rich-gift&trb_ad=' + ad);
   const gift = render(giftUrl);
   await gift.submit();
@@ -110,7 +112,7 @@ test('an ordinary visit and its checkout have no ad association', async () => {
 });
 
 test('private and ambiguous landing URLs leave events and purchase links untagged', () => {
-  for (const suffix of ['&gift_token=mock-private', '&utm_term=sydney', '&order=mock-private', '#gift=mock-private']) {
+  for (const suffix of ['&gift_token=mock-private', '&utm_term=london', '&order=mock-private', '#gift=mock-private']) {
     const home = render('/?' + tags + suffix);
     assert.equal(new URL(home.link('.hero__gift-cta')).searchParams.has('trb_ad'), false);
     assert.deepEqual(home.events, [{ event: 'page_view', page: 'home' }]);

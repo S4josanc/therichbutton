@@ -1,7 +1,7 @@
 // These public ad labels are shared by everyone who clicks the same advert.
 const adCodes = new Set([
   "vault-v1-miami", "vault-v1-dubai", "vault-v1-london",
-  "vault-v1-singapore", "vault-v1-sydney"
+  "vault-v1-new-york", "vault-v1-los-angeles"
 ]);
 
 export function approvedAd(value) {
