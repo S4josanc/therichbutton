@@ -1,0 +1,13 @@
+[data-bf-banner][hidden] { display:none }
+[data-bf-banner] {
+  margin:0 auto; padding:13px 18px; text-align:center; color:#f5e4bd;
+  border-block:1px solid #82683d; background:linear-gradient(110deg,#12100d,#2d2318,#12100d);
+  font:600 11px/1.5 Arial,sans-serif;
+}
+[data-bf-banner] b { display:inline-block; color:#e2bc77; letter-spacing:.13em; margin-right:1em }
+[data-bf-banner] strong { font:italic 21px/1.2 Georgia,serif }
+[data-bf-banner] small { display:block; margin-top:5px; font-size:11px }
+[data-bf-price] del { color:#b4a38a; font-size:.58em; white-space:nowrap }
+[data-bf-price] ins { color:#f5d394; text-decoration:none; white-space:nowrap }
+.bf-active .tier__price { flex-wrap:wrap; gap:.12em; align-items:baseline; font-size:clamp(27px,3.1vw,43px) }
+.bf-checkout-status { color:#f1cc89; font:13px/1.5 Arial,sans-serif; text-align:center }

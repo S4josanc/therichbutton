@@ -1,15 +1,29 @@
-const PRODUCTS = Object.freeze({
-  plink_1Uc13YLqa85X23XWz0MWwicl: { edition: 'gold', cents: 49900 },
-  plink_1Uc15QLqa85X23XWoPHuBvGf: { edition: 'platinum', cents: 199900 },
-  plink_1Uc16lLqa85X23XWZ2ewpcpd: { edition: 'diamond', cents: 999900 },
-});
+import { BLACK_FRIDAY, LIST_CENTS, quotePrice } from '../_shared/black-friday.mjs';
+
+const PAYMENT_LINKS = new Map([
+  ['plink_1Uc13YLqa85X23XWz0MWwicl', 'gold'],
+  ['plink_1Uc15QLqa85X23XWoPHuBvGf', 'platinum'],
+  ['plink_1Uc16lLqa85X23XWZ2ewpcpd', 'diamond'],
+]);
+
+export function matchEditionPrice(session) {
+  if (session?.livemode !== true || session.mode !== 'payment' || session.currency !== 'eur') return null;
+
+  const link = typeof session.payment_link === 'string' ? session.payment_link : session.payment_link?.id;
+  if (session.payment_link != null) {
+    const edition = PAYMENT_LINKS.get(link);
+    return edition && session.amount_total === LIST_CENTS[edition] ? { edition, cents: session.amount_total } : null;
+  }
+
+  const { product, edition, campaign } = session.metadata || {};
+  if (product !== 'rich-edition' || campaign !== BLACK_FRIDAY ||
+      !['gold', 'platinum', 'diamond'].includes(edition)) return null;
+  const quote = quotePrice(edition, session.created);
+  return quote.campaign === campaign && session.amount_total === quote.cents ? { edition, cents: session.amount_total } : null;
+}
 
 function validEditionSession(session) {
-  const link = typeof session?.payment_link === 'string' ? session.payment_link : session?.payment_link?.id;
-  const product = PRODUCTS[link];
-  if (!product || session.livemode !== true || session.mode !== 'payment' || session.status !== 'complete' ||
-      session.currency !== 'eur' || session.amount_total !== product.cents) return null;
-  return product;
+  return session?.status === 'complete' ? matchEditionPrice(session) : null;
 }
 
 export function validatePaidSession(session) {

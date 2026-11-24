@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { validatePaidSession } from "../rich-edition-access/handler.js";
+import { validGiftPayment } from "../_shared/gift-payment.mjs";
 const key=Deno.env.get("STRIPE_SECRET_KEY"),secret=Deno.env.get("STRIPE_WEBHOOK_SECRET");
 const stripe=key?new Stripe(key,{apiVersion:"2024-12-18.acacia"}):null;
 const cryptoProvider=Stripe.createSubtleCryptoProvider();
@@ -15,7 +16,7 @@ Deno.serve(async(req:Request)=>{
  if(event.type!=="checkout.session.completed"&&event.type!=="checkout.session.async_payment_succeeded")return Response.json({received:true});
  const session=event.data.object as Stripe.Checkout.Session;
  if(event.livemode!==true||session.livemode!==true)return new Response("Webhook mode mismatch",{status:400});
- // Edition Payment Links and the €49 Gift have separate order records.
+ // Edition checkouts and the personalised Gift have separate order records.
  const edition = validatePaidSession(session);
  if (edition) {
    const databaseUrl = Deno.env.get("SUPABASE_URL");
@@ -44,13 +45,14 @@ Deno.serve(async(req:Request)=>{
    return Response.json({ received: true });
  }
 
- if(session.payment_status!=="paid"||session.mode!=="payment"||session.currency!=="eur"||session.amount_total!==4900||session.metadata?.product!=="rich-gift"||!session.metadata?.order_id)return Response.json({received:true,ignored:true});
+ if(session.payment_status!=="paid"||session.mode!=="payment"||session.currency!=="eur"||session.metadata?.product!=="rich-gift"||!session.metadata?.order_id)return Response.json({received:true,ignored:true});
  const url=Deno.env.get("SUPABASE_URL"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
  if(!url||!service)return new Response("Database not configured",{status:503});
  const db=createClient(url,service,{auth:{persistSession:false}});
- const {data:order,error}=await db.from("rich_gift_orders").select("id,status,stripe_checkout_session_id").eq("id",session.metadata.order_id).single();
+ const {data:order,error}=await db.from("rich_gift_orders").select("id,status,stripe_checkout_session_id,amount_cents").eq("id",session.metadata.order_id).single();
  if(error||!order)return new Response("Order lookup failed",{status:500});
  if(order.stripe_checkout_session_id!==session.id)return new Response("Session mismatch",{status:409});
+ if(!validGiftPayment(session,order))return Response.json({received:true,ignored:true});
  if(order.status!=="paid"&&order.status!=="pending")return Response.json({received:true,ignored:true});
  if(order.status==="pending"){
  const {error:updateError}=await db.from("rich_gift_orders").update({status:"paid",buyer_email:session.customer_details?.email||session.customer_email||null,stripe_payment_intent_id:typeof session.payment_intent==="string"?session.payment_intent:null,gift_token:crypto.randomUUID(),paid_at:new Date().toISOString()}).eq("id",order.id).eq("status","pending");

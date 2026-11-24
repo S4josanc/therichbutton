@@ -97,3 +97,19 @@ the actual server role, permissions, appending new entries, promotion into the
 featured positions, audit, stale drafts and invalid IDs. All fixture rows and
 order changes are rolled back. If the runner stops on an assertion, roll back
 the transaction before continuing.
+
+## Black Friday 2026
+
+The storefront uses the quote returned by `rich-edition-checkout`. Checkout
+sessions started on 27 November in Europe/Bratislava qualify for half price on
+The Rich Gift, Gold, Platinum and Diamond. The server checks Stripe's session
+creation time and the amount it actually charged, including when confirmation
+arrives after midnight. The auction uses its existing pricing.
+
+Apply `sql/black-friday-2026.sql` before rolling out the functions. Update
+`stripe-gift-webhook`, `rich-gift-order-status`, `rich-edition-access` and
+`rich-delivery-review` before enabling the two checkout functions and publishing
+the storefront. When packaging `rich-delivery-review`, retain its existing private
+entrypoint and substitute the versioned `review.mjs` and its relative imports.
+Ordinary edition purchases use their original Stripe Payment Links. The promotion
+does not require changing a Stripe coupon or any of those links.

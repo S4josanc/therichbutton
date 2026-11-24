@@ -5,7 +5,8 @@
 do $guard$
 begin
   if to_regclass('public.rich_gift_orders') is not null
-    or to_regclass('public.rich_analytics_events') is not null then
+    or to_regclass('public.rich_analytics_events') is not null
+    or to_regclass('public.rich_edition_orders') is not null then
     raise exception 'Use an empty disposable database';
   end if;
 end;
@@ -20,9 +21,16 @@ create table public.rich_analytics_events (
 );
 create table public.rich_gift_orders (
   id bigint generated always as identity primary key,
-  status text not null default 'pending', amount_cents int not null default 4900,
+  status text not null default 'pending', amount_cents int not null default 4900 check (amount_cents = 4900),
   currency text not null default 'eur', paid_at timestamptz,
   stripe_checkout_session_id text unique, created_at timestamptz not null default now()
+);
+create table public.rich_edition_orders (
+  edition text not null, amount_cents integer not null,
+  constraint rich_edition_orders_check check (
+    (edition = 'gold' and amount_cents = 49900) or
+    (edition = 'platinum' and amount_cents = 199900) or
+    (edition = 'diamond' and amount_cents = 999900))
 );
 alter table public.rich_analytics_events enable row level security;
 alter table public.rich_gift_orders enable row level security;
@@ -33,6 +41,9 @@ grant select on public.rich_analytics_events, public.rich_gift_orders to service
 
 \ir ../sql/christmas-2026-cities.sql
 \ir ../sql/christmas-2026-cities.sql
+
+\ir ../sql/black-friday-2026.sql
+\ir ../sql/black-friday-2026.sql
 
 begin;
 set local timezone to 'America/Los_Angeles';
@@ -135,6 +146,30 @@ begin
     or (select paid_gifts from public.rich_campaign_report() where ad_code = 'vault-v1-singapore') is distinct from 1 then
     raise exception 'Archiving must preserve attributable history';
   end if;
+end;
+$checks$;
+reset role;
+
+-- Discounted sales retain the actual price and use the same reporting rules.
+insert into public.rich_edition_orders (edition, amount_cents)
+values ('gold',24950),('platinum',99950),('diamond',499950);
+insert into public.rich_gift_orders (campaign_ad, amount_cents, stripe_checkout_session_id, status, paid_at)
+values ('vault-v1-miami',2450,'cs_live_black_friday','paid',now());
+do $checks$
+begin
+  if (select paid_gifts from public.rich_campaign_report() where ad_code = 'vault-v1-miami') <> 1 then
+    raise exception 'Discounted paid gift was missing from report';
+  end if;
+  begin
+    insert into public.rich_edition_orders (edition,amount_cents) values ('diamond',24950);
+    raise exception 'Tier mismatch accepted';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.rich_gift_orders (amount_cents) values (2400);
+    raise exception 'Unexpected gift amount accepted';
+  exception when check_violation then null;
+  end;
 end;
 $checks$;
 rollback;
