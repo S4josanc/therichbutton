@@ -4,11 +4,13 @@ import { readFile } from "node:fs/promises";
 import { stripTypeScriptTypes } from "node:module";
 import { runInNewContext } from "node:vm";
 import { validatePaidSession } from "../functions/rich-edition-access/handler.js";
+import { BLACK_FRIDAY, BLACK_FRIDAY_START, BLACK_FRIDAY_END, quotePrice } from "../functions/_shared/black-friday.mjs";
+import { validGiftPayment } from "../functions/_shared/gift-payment.mjs";
 import { approvedAd, rejectedCampaignAd } from "../functions/_shared/campaign-ad.mjs";
 
 // No Deno process, keys or network. Execute the deployed entrypoints' request
 // handlers with the SDK constructors replaced by in-memory doubles.
-async function loadHandler(name, db, stripe, settings = {}) {
+async function loadHandler(name, db, stripe, settings = {}, now = BLACK_FRIDAY_START - 1) {
   const path = new URL(`../functions/${name}/index.ts`, import.meta.url);
   const source = (await readFile(path, "utf8")).replace(/^import[^\n]*;\r?$/gm, "");
   let handler;
@@ -20,7 +22,8 @@ async function loadHandler(name, db, stripe, settings = {}) {
     Deno: { serve: fn => { handler = fn; }, env: { get: key => env[key] } },
     Stripe: class { constructor() { return stripe; } static createSubtleCryptoProvider() { return {}; } },
     createClient: () => db,
-    approvedAd, rejectedCampaignAd, validatePaidSession, Response, crypto: globalThis.crypto, console: { error() {}, log() {} }
+    Date: class extends Date { static now() { return now * 1000; } },
+    quotePrice, validGiftPayment, approvedAd, rejectedCampaignAd, validatePaidSession, Response, crypto: globalThis.crypto, console: { error() {}, log() {} }
   });
   return (payload, origin = "https://therichbutton.com", headers = {}) => handler(new Request("https://fixture.invalid", {
     method: "POST", headers: { "Content-Type": "application/json", Origin: origin, ...headers },
@@ -85,7 +88,7 @@ test("a schema-cache rejection of the campaign column permits one untagged fallb
   assert.equal(other.rows.length, 1);
 });
 
-async function checkoutFixture({ live = true, failCreate = false, linkErrors = [], settings } = {}) {
+async function checkoutFixture({ live = true, failCreate = false, linkErrors = [], settings, now = BLACK_FRIDAY_START - 1, created = now } = {}) {
   const inserts = [], updates = [], sessions = [], expirations = [];
   const db = { from(table) {
     assert.equal(table, "rich_gift_orders");
@@ -110,11 +113,11 @@ async function checkoutFixture({ live = true, failCreate = false, linkErrors = [
     async create(params, options) {
       sessions.push({ params: clone(params), options: clone(options) });
       if (failCreate) throw Error("fixture");
-      return { id: "cs_fixture", url: "https://checkout.stripe.com/fixture", livemode: live };
+      return { id: "cs_fixture", url: "https://checkout.stripe.com/fixture", livemode: live, created, currency:"eur", amount_total:params.line_items[0].price_data.unit_amount };
     },
     async expire(id) { expirations.push(id); }
   } } };
-  return { inserts, updates, sessions, expirations, post: await loadHandler("rich-gift-checkout", db, stripe, settings) };
+  return { inserts, updates, sessions, expirations, post: await loadHandler("rich-gift-checkout", db, stripe, settings, now) };
 }
 
 const buyer = { recipient: "Example", sender: "Fixture", message: "Hello" };
@@ -125,7 +128,7 @@ test("attaches an ad to exactly the existing live session and retains it on canc
   const f = await checkoutFixture();
   const response = await f.post({ ...buyer, campaign_ad: ad, utm_term: "arbitrary", fbclid: "click" });
   assert.deepEqual(await response.json(), { checkout_url: checkoutUrl });
-  assert.deepEqual(f.inserts, [{ recipient_name: "Example", sender_name: "Fixture", dedication: "Hello",
+  assert.deepEqual(f.inserts, [{ amount_cents: 4900, recipient_name: "Example", sender_name: "Fixture", dedication: "Hello",
     wall_opt_in: false, wall_alias: null, referral_kind: null, referral_token: null }]);
   assert.deepEqual(f.updates, [{ stripe_checkout_session_id: "cs_fixture", campaign_ad: ad }]);
   assert.equal(f.sessions.length, 1);
@@ -180,8 +183,8 @@ test("schema-cache delay leaves one usable live session, ordinary update failure
   assert.deepEqual(failure.expirations, ["cs_fixture"]);
 });
 
-test("verified gift fulfillment retains the checkout's ad; replay cannot duplicate or reactivate a sale", async () => {
-  const row = { id: "order1", stripe_checkout_session_id: "cs_fixture", status: "pending",
+async function checkGiftFulfillment(amount, orderSession) {
+  const row = { id: "order1", amount_cents: amount, stripe_checkout_session_id: "cs_fixture", status: "pending",
     campaign_ad: ad, email_sent_at: "2026-11-22" };
   const writes = [];
   const db = { from(table) {
@@ -200,10 +203,10 @@ test("verified gift fulfillment retains the checkout's ad; replay cannot duplica
     if (signature !== "fixture") throw Error("signature");
     return JSON.parse(text);
   } } };
-  const send = await loadHandler("stripe-gift-webhook", db, stripe);
+  const send = await loadHandler("stripe-gift-webhook", db, stripe, {}, BLACK_FRIDAY_END + 3600);
   const event = { type: "checkout.session.completed", livemode: true, data: { object: {
     id: row.stripe_checkout_session_id, livemode: true, payment_status: "paid", mode: "payment",
-    currency: "eur", amount_total: 4900, metadata: { product: "rich-gift", order_id: row.id }
+    currency: "eur", amount_total: amount, metadata: { product: "rich-gift", order_id: row.id }, ...orderSession
   } } };
   const fire = (body, signature = "fixture") => send(body, undefined, { "stripe-signature": signature });
   assert.equal((await fire(event, "invalid")).status, 400);
@@ -221,6 +224,14 @@ test("verified gift fulfillment retains the checkout's ad; replay cannot duplica
   assert.equal((await (await fire(event)).json()).ignored, true);
   assert.equal(writes.length, 1);
   assert.equal(row.status, "refunded");
+}
+test("a normal gift keeps attribution and cannot be duplicated or reactivated after refund", async () => {
+  await checkGiftFulfillment(4900, {});
+});
+
+test("a Black Friday gift can be fulfilled after the offer, replayed and later refunded", async () => {
+  await checkGiftFulfillment(2450, { created: BLACK_FRIDAY_END - 1,
+    metadata: { product: "rich-gift", order_id: "order1", campaign: BLACK_FRIDAY } });
 });
 
 test("an absent catalog entry drops only the optional ad, unrelated foreign keys still fail", async () => {
@@ -249,4 +260,56 @@ test("an absent catalog entry drops only the optional ad, unrelated foreign keys
   assert.equal((await rejectedOrder.post({ ...buyer, campaign_ad: ad })).status, 500);
   assert.equal(rejectedOrder.updates.length, 1);
   assert.deepEqual(rejectedOrder.expirations, ["cs_fixture"]);
+});
+
+
+test("gift checkout stores one authoritative price in the order and Stripe session", async () => {
+  for (const [now, cents] of [
+    [BLACK_FRIDAY_START - 1, 4900], [BLACK_FRIDAY_START, 2450],
+    [BLACK_FRIDAY_END - 1, 2450], [BLACK_FRIDAY_END, 4900],
+  ]) {
+    const f = await checkoutFixture({ now });
+    const response = await f.post({ ...buyer, expected_amount_cents: cents, amount_cents: 1, campaign: "untrusted" });
+    assert.equal(response.status, 200);
+    assert.equal(f.inserts[0].amount_cents, cents);
+    const { params } = f.sessions[0];
+    assert.equal(params.line_items[0].price_data.unit_amount, cents);
+    assert.equal(params.metadata.campaign, cents === 2450 ? BLACK_FRIDAY : undefined);
+    if (cents === 2450) assert.equal(params.adaptive_pricing.enabled, false);
+  }
+});
+
+test("a stale displayed price or an in-flight midnight change produces no checkout link", async () => {
+  for (const [now, cents] of [[BLACK_FRIDAY_START, 4900],[BLACK_FRIDAY_END, 2450]]) {
+    const f = await checkoutFixture({ now });
+    const res = await f.post({ ...buyer, expected_amount_cents: cents });
+    assert.equal(res.status, 409);
+    assert.equal((await res.json()).code, "price_changed");
+    assert.equal(f.inserts.length, 0);
+    assert.equal(f.sessions.length, 0);
+  }
+  for (const boundary of [BLACK_FRIDAY_START,BLACK_FRIDAY_END]) {
+    const f = await checkoutFixture({ now: boundary - 1, created: boundary });
+    const res = await f.post(buyer);
+    assert.equal(res.status, 409);
+    assert.deepEqual(f.expirations, ["cs_fixture"]);
+    assert.deepEqual(f.updates, []);
+  }
+});
+
+test("a discounted gift can be fulfilled later only against its recorded quote and signed campaign", () => {
+  const order = { id: "gift", stripe_checkout_session_id: "cs_live_gift", amount_cents: 2450 };
+  const session = { id: order.stripe_checkout_session_id, created: BLACK_FRIDAY_END - 1,
+    livemode: true, mode: "payment", currency: "eur", payment_status: "paid", amount_total: 2450,
+    metadata: { order_id: order.id, product: "rich-gift", campaign: BLACK_FRIDAY } };
+  assert.equal(validGiftPayment(session, order), true);
+  for (const change of [
+    { created: BLACK_FRIDAY_START - 1 }, { created: BLACK_FRIDAY_END }, { amount_total: 2449 },
+    { metadata: { ...session.metadata, campaign: "other" } },
+    { metadata: { order_id: order.id, product: "rich-gift" } },
+    { metadata: { ...session.metadata, order_id: "elsewhere" } },
+    { payment_status: "unpaid" }, { mode: "subscription" }, { livemode: false },
+    { currency: "usd" }, { id: "cs_live_different" },
+  ]) assert.equal(validGiftPayment({ ...session, ...change }, order), false);
+  assert.equal(validGiftPayment(session, { ...order, amount_cents: 4900 }), false);
 });

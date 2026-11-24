@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { approvedAd, rejectedCampaignAd } from "../_shared/campaign-ad.mjs";
+import { quotePrice } from "../_shared/black-friday.mjs";
 const headers={"Access-Control-Allow-Origin":"https://therichbutton.com","Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
 const respond=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers});
 Deno.serve(async(req:Request)=>{
@@ -26,18 +27,32 @@ Deno.serve(async(req:Request)=>{
   if(!source.error&&source.data){referralKind=kind;referralToken=candidate}
  }
 
- const {data:order,error}=await db.from("rich_gift_orders").insert({recipient_name:recipient,sender_name:sender,dedication:message,wall_opt_in:wallOptIn,wall_alias:wallAlias,referral_kind:referralKind,referral_token:referralToken}).select("id,access_token").single();
+ const price=quotePrice("rich-gift",Math.floor(Date.now()/1000));
+ const priceChanged=()=>respond({code:"price_changed",error:"The price has changed. Review the price and try again."},409);
+ if(data.expected_amount_cents!==undefined && data.expected_amount_cents!==price.cents)return priceChanged();
+
+ const {data:order,error}=await db.from("rich_gift_orders").insert({amount_cents:price.cents,recipient_name:recipient,sender_name:sender,dedication:message,wall_opt_in:wallOptIn,wall_alias:wallAlias,referral_kind:referralKind,referral_token:referralToken}).select("id,access_token").single();
  if(error||!order)return respond({error:"Unable to prepare order"},500);
  const stripe=new Stripe(key,{apiVersion:"2024-12-18.acacia"});
  try{
   const session=await stripe.checkout.sessions.create({
    mode:"payment",customer_creation:"always",billing_address_collection:"auto",
-   line_items:[{price_data:{currency:"eur",unit_amount:4900,tax_behavior:"inclusive",product_data:{name:"🎁 THE RICH GIFT™ | The Art of Giving Nothing ✨",description:"Personalized digital gift with a private reveal and virtual button"}},quantity:1}],
-   client_reference_id:order.id,metadata:{order_id:order.id,product:"rich-gift"},
+   line_items:[{price_data:{currency:"eur",unit_amount:price.cents,tax_behavior:"inclusive",product_data:{name:"🎁 THE RICH GIFT™ | The Art of Giving Nothing ✨",description:"Personalized digital gift with a private reveal and virtual button"}},quantity:1}],
+   client_reference_id:order.id,metadata:{order_id:order.id,product:"rich-gift",...(price.campaign?{campaign:price.campaign}:{})},
+   ...(price.campaign?{adaptive_pricing:{enabled:false}}:{}),
    success_url:"https://therichbutton.com/gift.html?order="+encodeURIComponent(order.access_token)+"&session_id={CHECKOUT_SESSION_ID}",
    cancel_url:"https://therichbutton.com/gift.html?tier=rich-gift&checkout=cancelled"+(ad?"&trb_ad="+encodeURIComponent(ad):"")
   },{idempotencyKey:"rich-gift-"+order.id});
   if(session.livemode!==true){await stripe.checkout.sessions.expire(session.id).catch(()=>{});return respond({error:"Checkout mode mismatch"},503)}
+  if(price.campaign && (session.currency!=="eur" || session.amount_total!==price.cents)){
+   await stripe.checkout.sessions.expire(session.id);
+   return respond({error:"Checkout could not verify the gift price."},503);
+  }
+  // A session created on the other side of midnight must never be offered at a stale price.
+  if(quotePrice("rich-gift",session.created).cents!==price.cents){
+   await stripe.checkout.sessions.expire(session.id);
+   return priceChanged();
+  }
   const linkSession=(campaignAd:string|null)=>db.from("rich_gift_orders")
     .update({stripe_checkout_session_id:session.id,...(campaignAd?{campaign_ad:campaignAd}:{})})
     .eq("id",order.id).eq("status","pending").select("id").single();

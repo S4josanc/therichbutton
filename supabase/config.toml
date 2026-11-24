@@ -22,3 +22,17 @@ verify_jwt = false
 verify_jwt = false
 [functions.rich-gift-checkout]
 verify_jwt = false
+
+[functions.rich-edition-checkout]
+verify_jwt = false
+
+# These existing endpoints validate Stripe signatures, private order tokens or
+# the delivery review credential in the handler. Preserve their gateway settings.
+[functions.stripe-gift-webhook]
+verify_jwt = false
+[functions.rich-gift-order-status]
+verify_jwt = false
+[functions.rich-edition-access]
+verify_jwt = false
+[functions.rich-delivery-review]
+verify_jwt = false

@@ -33,7 +33,7 @@ as $report$
     select o.campaign_ad, count(*) as starts,
       count(*) filter (
         where o.status = 'paid' and o.paid_at is not null
-          and o.amount_cents = 4900 and lower(o.currency) = 'eur'
+          and o.amount_cents > 0 and lower(o.currency) = 'eur'
       ) as paid
     from public.rich_gift_orders o
     where o.campaign_ad is not null and starts_with(o.stripe_checkout_session_id, 'cs_live_')
