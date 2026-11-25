@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { stripTypeScriptTypes } from "node:module";
 import { runInNewContext } from "node:vm";
-import { validatePaidSession } from "../functions/rich-edition-access/handler.js";
+import { validatePaidSession, editionOrganicFields } from "../functions/rich-edition-access/handler.js";
 import { BLACK_FRIDAY, BLACK_FRIDAY_START, BLACK_FRIDAY_END, quotePrice } from "../functions/_shared/black-friday.mjs";
-import { validGiftPayment } from "../functions/_shared/gift-payment.mjs";
-import { approvedAd, rejectedCampaignAd } from "../functions/_shared/campaign-ad.mjs";
+import { writeOrganicOrder } from "../functions/_shared/organic-order.mjs";
+import { validGiftPayment, giftOrganicFields } from "../functions/_shared/gift-payment.mjs";
+import { approvedAd, approvedOrganicPost, rejectedCampaignAd } from "../functions/_shared/campaign-ad.mjs";
 
 // No Deno process, keys or network. Execute the deployed entrypoints' request
 // handlers with the SDK constructors replaced by in-memory doubles.
@@ -23,7 +24,7 @@ async function loadHandler(name, db, stripe, settings = {}, now = BLACK_FRIDAY_S
     Stripe: class { constructor() { return stripe; } static createSubtleCryptoProvider() { return {}; } },
     createClient: () => db,
     Date: class extends Date { static now() { return now * 1000; } },
-    quotePrice, validGiftPayment, approvedAd, rejectedCampaignAd, validatePaidSession, Response, crypto: globalThis.crypto, console: { error() {}, log() {} }
+    quotePrice, validGiftPayment, writeOrganicOrder, giftOrganicFields, editionOrganicFields, approvedAd, approvedOrganicPost, rejectedCampaignAd, validatePaidSession, Response, crypto: globalThis.crypto, console: { error() {}, log() {} }
   });
   return (payload, origin = "https://therichbutton.com", headers = {}) => handler(new Request("https://fixture.invalid", {
     method: "POST", headers: { "Content-Type": "application/json", Origin: origin, ...headers },
@@ -93,6 +94,38 @@ test("a schema-cache rejection of the campaign column permits one untagged fallb
   const other = await analyticsFixture([{ code: "42703", message: "another_field is missing" }]);
   assert.equal((await other.post(payload)).status, 503);
   assert.equal(other.rows.length, 1);
+});
+
+
+test("organic events require a catalogue code and a public page; a public event cannot record a sale", async () => {
+  const { rows, post } = await analyticsFixture();
+  const code = "pinterest_christmas_2026_day-01";
+  const valid = { event: "organic_landing", page: "home", organic_post_id: code };
+  for (const event of ["organic_landing", "organic_checkout_click"]) {
+    for (const page of ["home", "gift", "rich-gift", "rich-gift-button", "gold", "platinum", "diamond"]) {
+      assert.equal((await post({ ...valid, event, page })).status, 204);
+      assert.deepEqual(rows.at(-1), { ...baseVisit, page, event_type: event, organic_post_id: code });
+    }
+  }
+  const before = rows.length;
+  for (const invalid of [{ ...valid, event: "verified_sale" }, { ...valid, event: "purchase" },
+    { ...valid, page: "open-gift" }, { ...valid, page: "throne" }, { ...valid, id: "private" },
+    { ...valid, email: "private@example.invalid" }, { ...valid, campaign_ad: ad },
+    { ...valid, organic_post_id: "pinterest_christmas_2026_profile" }, { ...valid, organic_post_id: {} }]) {
+    assert.equal((await post(invalid)).status, 400);
+  }
+  assert.equal(rows.length, before);
+  assert.equal((await post(valid, "https://other.invalid")).status, 403);
+  assert.equal((await post({ event: "page_view", page: "home", organic_post_id: code, campaign_ad: ad })).status, 204);
+  assert.deepEqual(rows.at(-1), baseVisit);
+});
+
+test("organic write failure never silently becomes a paid or direct visit", async () => {
+  const { rows, post } = await analyticsFixture([{ code: "23503", message: "unknown organic post" }]);
+  const res = await post({ event: "organic_landing", page: "rich-gift",
+    organic_post_id: "facebook_black_friday_2026_black-friday" });
+  assert.equal(res.status, 503);
+  assert.equal(rows.length, 1);
 });
 
 async function checkoutFixture({ live = true, failCreate = false, linkErrors = [], settings, now = BLACK_FRIDAY_START - 1, created = now } = {}) {

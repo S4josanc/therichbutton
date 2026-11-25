@@ -9,6 +9,19 @@ export function approvedAd(value) {
   return typeof value === "string" && adCodes.has(value) ? value : null;
 }
 
+// A short public key from the November editorial calendar. Three shared Christmas
+// profile links identify only their channel, never an individual publication.
+export function approvedOrganicPost(value) {
+  if (typeof value !== "string" || value.length > 64) return null;
+  const match = /^(pinterest|facebook|instagram|tiktok|youtube)_(black_friday_2026|christmas_2026)_(black-friday|day-(?:0[1-9]|1[0-9]|20)|profile)$/.exec(value);
+  if (!match) return null;
+  const [, source, campaign, content] = match;
+  if (campaign === "black_friday_2026") return content === "black-friday" ? value : null;
+  if (content === "black-friday") return null;
+  if (content === "profile" && !["instagram", "tiktok", "youtube"].includes(source)) return null;
+  return value;
+}
+
 // Retry only if PostgreSQL or its schema cache explicitly rejected the ad
 // column or this table's ad foreign key. Ambiguous writes must not be replayed.
 export function rejectedCampaignAd(error, table) {

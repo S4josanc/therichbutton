@@ -1,5 +1,6 @@
 import { BLACK_FRIDAY_START, BLACK_FRIDAY_END, LIST_CENTS, isBlackFriday, quotePrice } from '../_shared/black-friday.mjs';
 
+import { approvedOrganicPost } from '../_shared/campaign-ad.mjs';
 import { PUBLIC_API_KEY, SITE_ORIGIN as ORIGIN } from '../_shared/throne-core.mjs';
 const HEADERS = {
   'Content-Type': 'application/json',
@@ -45,7 +46,9 @@ export function createEditionCheckoutHandler({ stripe, now = () => Math.floor(Da
     }
     const edition = body.edition;
     const quote = quotePrice(edition, seconds);
-    const metadata = { product: 'rich-edition', edition, campaign: quote.campaign };
+    const organicPost = approvedOrganicPost(body.organic_post_id);
+    const metadata = { product: 'rich-edition', edition, campaign: quote.campaign,
+      ...(organicPost ? {organic_post_id: organicPost} : {}) };
     try {
       const session = await stripe.checkout.sessions.create({
         mode: 'payment', customer_creation: 'always', adaptive_pricing: { enabled: false },
@@ -55,7 +58,7 @@ export function createEditionCheckoutHandler({ stripe, now = () => Math.floor(Da
             product_data: { name: 'The Rich Button · ' + names.get(edition) + ' Edition (Black Friday)' } },
         }],
         success_url: ORIGIN + '/edition-access.html?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url: ORIGIN + '/#editions',
+        cancel_url: organicPost ? ORIGIN + '/gift.html?tier=' + edition + '&checkout=cancelled&trb_post=' + encodeURIComponent(organicPost) + '#editionCheckoutBox' : ORIGIN + '/#editions',
       }, body.request_id ? { idempotencyKey: quote.campaign + ':' + edition + ':' + body.request_id } : {});
       // Stripe timestamps the session. Discard one created on the other side of midnight.
       if (session.livemode !== true || !isBlackFriday(session.created) ||

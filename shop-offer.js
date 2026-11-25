@@ -66,7 +66,8 @@
       if (!originalLinks.has(link) || link.id === 'editionPurchaseLink') originalLinks.set(link, link.getAttribute('href'));
       if (!list[id]) continue;
       // A promotional link opened in another tab still leads to the selected edition at the displayed rate.
-      link.setAttribute('href', prices ? 'gift.html?tier=' + id + '#editionCheckoutBox' : originalLinks.get(link));
+      const href = prices ? 'gift.html?tier=' + id + '#editionCheckoutBox' : originalLinks.get(link);
+      link.setAttribute('href', window.richCampaign?.organicLink?.(href) || href);
     }
   }
   async function refresh() {
@@ -131,11 +132,11 @@
           feedback(link,es() ? 'El precio ha cambiado. Revísalo antes de continuar.' : 'The price has changed. Review it before continuing.');
           return;
         }
-        if (!store.active) { location.assign(originalLinks.get(link)); return; }
+        if (!store.active) { const href = originalLinks.get(link); location.assign(window.richCampaign?.organicLink?.(href) || href); return; }
       }
       feedback(link,es() ? 'Preparando el pago…' : 'Preparing checkout…');
       const response = await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json', apikey:publicKey},
-        credentials:'omit',referrerPolicy:'no-referrer',body:JSON.stringify({edition,request_id:crypto.randomUUID()})});
+        credentials:'omit',referrerPolicy:'no-referrer',body:JSON.stringify({edition,request_id:crypto.randomUUID(),organic_post_id:window.richCampaign?.organicPostId})});
       const result = await response.json();
       if (response.status===409) {
         await refresh();

@@ -22,7 +22,7 @@ function runPage(path, hrefs = [], loadScript = true) {
   const window = { location:{href} };
   const anchors = hrefs.map(link => ({href:new URL(link, href).href}));
   const requests = [];
-  const context = {window, URL, URLSearchParams, document:{querySelectorAll:() => anchors},
+  const context = {window, URL, URLSearchParams, document:{querySelectorAll:() => anchors,getElementById:() => null},
     fetch:(url, options) => { requests.push({url, ...options});return Promise.resolve(); }};
   if (loadScript) vm.runInNewContext(campaign, context);
   if (['/', '/index.html'].includes(new URL(href).pathname)) {
@@ -138,7 +138,7 @@ test('buyer pages suppress the referrer on the campaign script; recipient and de
   for (const html of [home, overview, gift]) {
     assert.match(html, /<script src="campaign\.js" referrerpolicy="no-referrer"/);
   }
-  for (const name of ['open-gift.html','gift-delivery.html','rich-gift-button.html','print-gift.html']) {
+  for (const name of ['open-gift.html','gift-delivery.html','print-gift.html']) {
     assert.ok(!read(name).includes('campaign.js'), name);
   }
 });

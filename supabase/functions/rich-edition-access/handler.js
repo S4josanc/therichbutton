@@ -1,5 +1,8 @@
 import { BLACK_FRIDAY, LIST_CENTS, quotePrice } from '../_shared/black-friday.mjs';
 
+import { approvedOrganicPost } from '../_shared/campaign-ad.mjs';
+import { writeOrganicOrder } from '../_shared/organic-order.mjs';
+
 const PAYMENT_LINKS = new Map([
   ['plink_1Uc13YLqa85X23XWz0MWwicl', 'gold'],
   ['plink_1Uc15QLqa85X23XWoPHuBvGf', 'platinum'],
@@ -30,6 +33,17 @@ export function validatePaidSession(session) {
   return session?.payment_status === 'paid' ? validEditionSession(session) : null;
 }
 
+// Called after validatePaidSession succeeds. Only a recognised Payment Link
+// may use a public client reference. BF sessions carry server-built metadata.
+export function editionOrganicFields(session, verifiedAt) {
+  const reference = session.client_reference_id;
+  const raw = session.payment_link
+    ? (typeof reference === 'string' && reference.startsWith('trb_org_') ? reference.slice(8) : null)
+    : session.metadata?.organic_post_id;
+  const post = approvedOrganicPost(raw);
+  return post ? {organic_post_id: post, organic_verified_at: verifiedAt} : {};
+}
+
 export function createHandler({ stripe, db }) {
   const headers = { 'Access-Control-Allow-Origin': 'https://therichbutton.com', 'Access-Control-Allow-Headers': 'content-type,apikey', 'Access-Control-Allow-Methods': 'POST,OPTIONS', 'Cache-Control': 'no-store', 'Content-Type': 'application/json', 'Referrer-Policy': 'no-referrer' };
   const response = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
@@ -56,7 +70,13 @@ export function createHandler({ stripe, db }) {
       let found = await db.from('rich_edition_orders').select('edition,status,access_token').eq('stripe_session_id', id).maybeSingle();
       if (found.error) throw Error('Lookup failed');
       if (!found.data) {
-        const saved = await db.from('rich_edition_orders').insert({ edition: product.edition, amount_cents: product.cents, status: 'paid', stripe_session_id: id, stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id, paid_at: new Date().toISOString() });
+        const paidAt = new Date().toISOString();
+        const saved = await writeOrganicOrder('rich_edition_orders', editionOrganicFields(session, paidAt),
+          fields => db.from('rich_edition_orders').insert({
+            edition: product.edition, amount_cents: product.cents, status: 'paid', stripe_session_id: id,
+            stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id,
+            paid_at: paidAt, ...fields,
+          }));
         if (saved.error && saved.error.code !== '23505') throw Error('Save failed');
         found = await db.from('rich_edition_orders').select('edition,status,access_token').eq('stripe_session_id', id).maybeSingle();
       }
