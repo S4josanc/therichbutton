@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <link rel="icon" href="data:,">
+  <title>The Rich Button</title>
+  <script>
+    (() => {
+      const sources = new URLSearchParams(location.search).getAll('source');
+      const source = sources.length === 1 ? sources[0] : '';
+      let destination = '/';
+
+      if (['instagram', 'tiktok', 'youtube'].includes(source)) {
+        // Boundaries are midnight in Bratislava. The end of each interval is exclusive.
+        const now = Date.now();
+        const blackFriday = now >= Date.parse('2026-11-26T23:00:00Z') &&
+          now < Date.parse('2026-11-27T23:00:00Z');
+        const christmas = now >= Date.parse('2026-12-04T23:00:00Z') &&
+          now < Date.parse('2026-12-24T23:00:00Z');
+
+        if (blackFriday || christmas) {
+          const page = blackFriday && source !== 'youtube' ? '/rich-gift.html' : '/';
+          const tags = new URLSearchParams({
+            utm_source: source,
+            utm_medium: 'organic_social',
+            utm_campaign: blackFriday ? 'black_friday_2026' : 'christmas_2026',
+            utm_content: blackFriday ? 'black-friday' : 'profile',
+          });
+          destination = page + '?' + tags;
+        }
+      }
+
+      location.replace(destination);
+    })();
+  </script>
+</head>
+<body>
+  <p><a href="/">Continue to The Rich Button</a></p>
+</body>
+</html>
