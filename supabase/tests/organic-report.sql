@@ -13,7 +13,7 @@ ALTER TABLE public.rich_edition_orders
 ALTER TABLE public.rich_edition_orders ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON public.rich_edition_orders TO service_role;
 
-\ir ../migrations/20261125170000_organic_attribution.sql
+\ir ../migrations/20261125173212_organic_attribution.sql
 
 BEGIN;
 INSERT INTO public.rich_analytics_events (event_type,page,organic_post_id,created_at) VALUES
