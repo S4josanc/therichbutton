@@ -1,7 +1,8 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { validatePaidSession } from "../rich-edition-access/handler.js";
-import { validGiftPayment } from "../_shared/gift-payment.mjs";
+import { validatePaidSession, editionOrganicFields } from "../rich-edition-access/handler.js";
+import { writeOrganicOrder } from "../_shared/organic-order.mjs";
+import { validGiftPayment, giftOrganicFields } from "../_shared/gift-payment.mjs";
 const key=Deno.env.get("STRIPE_SECRET_KEY"),secret=Deno.env.get("STRIPE_WEBHOOK_SECRET");
 const stripe=key?new Stripe(key,{apiVersion:"2024-12-18.acacia"}):null;
 const cryptoProvider=Stripe.createSubtleCryptoProvider();
@@ -31,16 +32,17 @@ Deno.serve(async(req:Request)=>{
    };
    // The return page may have already issued a private link. Keep that row and
    // its access token, including any refund recorded since the original payment.
-   const saved = await db.from("rich_edition_orders").upsert(order, {
+   const fields = editionOrganicFields(session, order.paid_at);
+   const saved = await writeOrganicOrder("rich_edition_orders", fields, (optional:Record<string, string>) => db.from("rich_edition_orders").upsert({ ...order, ...optional }, {
      onConflict: "stripe_session_id", ignoreDuplicates: true
-   });
+   }));
    if (saved.error) return new Response("Edition confirmation will be retried", { status: 503 });
    // A pending row can be upgraded, but replaying a signed event must never
    // reactivate a refunded edition or overwrite an already-issued token.
-   const updated = await db.from("rich_edition_orders")
-     .update({ status: "paid", stripe_payment_intent_id: paymentIntent, paid_at: order.paid_at })
+   const updated = await writeOrganicOrder("rich_edition_orders", fields, (optional:Record<string, string>) => db.from("rich_edition_orders")
+     .update({ status: "paid", stripe_payment_intent_id: paymentIntent, paid_at: order.paid_at, ...optional })
      .eq("stripe_session_id", session.id).eq("edition", edition.edition)
-     .eq("amount_cents", edition.cents).eq("status", "pending");
+     .eq("amount_cents", edition.cents).eq("status", "pending"));
    if (updated.error) return new Response("Edition confirmation will be retried", { status: 503 });
    return Response.json({ received: true });
  }
@@ -55,8 +57,16 @@ Deno.serve(async(req:Request)=>{
  if(!validGiftPayment(session,order))return Response.json({received:true,ignored:true});
  if(order.status!=="paid"&&order.status!=="pending")return Response.json({received:true,ignored:true});
  if(order.status==="pending"){
- const {error:updateError}=await db.from("rich_gift_orders").update({status:"paid",buyer_email:session.customer_details?.email||session.customer_email||null,stripe_payment_intent_id:typeof session.payment_intent==="string"?session.payment_intent:null,gift_token:crypto.randomUUID(),paid_at:new Date().toISOString()}).eq("id",order.id).eq("status","pending");
- if(updateError)return new Response("Fulfillment failed",{status:500});
+   const paidAt = new Date().toISOString();
+   const payment = {
+     status:"paid", paid_at:paidAt, gift_token:crypto.randomUUID(),
+     buyer_email:session.customer_details?.email || session.customer_email || null,
+     stripe_payment_intent_id:typeof session.payment_intent === "string" ? session.payment_intent : null,
+   };
+   const saved = await writeOrganicOrder("rich_gift_orders", giftOrganicFields(session, paidAt),
+     (fields:Record<string, string>) => db.from("rich_gift_orders").update({...payment, ...fields})
+       .eq("id", order.id).eq("status", "pending"));
+   if(saved.error)return new Response("Fulfillment failed",{status:500});
  }
  try{
    const {data:fulfilled,error:fulfillmentError}=await db.from("rich_gift_orders").select("status,gift_token,email_sent_at,buyer_email").eq("id",order.id).single();

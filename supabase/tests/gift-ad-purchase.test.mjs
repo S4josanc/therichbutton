@@ -4,7 +4,8 @@ import { stripTypeScriptTypes } from 'node:module';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { BLACK_FRIDAY, BLACK_FRIDAY_START } from '../functions/_shared/black-friday.mjs';
-import { validGiftPayment } from '../functions/_shared/gift-payment.mjs';
+import { validGiftPayment, giftOrganicFields } from '../functions/_shared/gift-payment.mjs';
+import { writeOrganicOrder } from '../functions/_shared/organic-order.mjs';
 
 const code = await readFile(new URL('../functions/rich-gift-order-status/index.ts', import.meta.url), 'utf8');
 const handlerCode = stripTypeScriptTypes(code.replace(/^import[^\n]*;/gm, ''));
@@ -33,7 +34,7 @@ function receipt({ discount = false, orderStatus = 'paid', overrides = {}, recei
     if (!fields.includes('marketing_event_id')) return { data: order };
     return dbError ? { error: {} } : { data: receiptRow };
   }} }}; }}; }};
-  runInNewContext(handlerCode, { createClient: () => db, validGiftPayment, URL, Response, console,
+  runInNewContext(handlerCode, { createClient: () => db, validGiftPayment, giftOrganicFields, writeOrganicOrder, URL, Response, console,
     Deno: { env: { get: () => 'sk_live_fixture' }, serve: fn => { handler = fn; } },
     Stripe: class { checkout = { sessions: { retrieve: async (id, options) => {
       stripeReads++;
@@ -59,6 +60,15 @@ test('validated full or discounted receipts return only the independent stable e
     assert.deepEqual(await source.call(), expected);
     assert.deepEqual(await source.call(), expected);
   }
+});
+
+test('consented Purchase does not disclose the organic campaign recorded on a verified Gift', async () => {
+  const post = 'pinterest_christmas_2026_day-01';
+  const source = receipt({
+    overrides: {organic_post_id: post, organic_verified_at: '2026-12-02T09:00:00Z'},
+    sessionOverrides: {metadata: {product: 'rich-gift', order_id: 'private-order', organic_post_id: post}},
+  });
+  assert.deepEqual(await source.call(), {purchase: {eventId, value: 49, currency: 'EUR'}});
 });
 
 test('ordinary paid gift delivery stays independent of advertising, and a recovery URL never creates a Purchase', async () => {

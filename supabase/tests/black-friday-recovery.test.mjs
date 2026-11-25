@@ -4,7 +4,8 @@ import { stripTypeScriptTypes } from "node:module";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 import { BLACK_FRIDAY, BLACK_FRIDAY_START } from "../functions/_shared/black-friday.mjs";
-import { validGiftPayment } from "../functions/_shared/gift-payment.mjs";
+import { writeOrganicOrder } from "../functions/_shared/organic-order.mjs";
+import { validGiftPayment, giftOrganicFields } from "../functions/_shared/gift-payment.mjs";
 import { editions, reviewSession } from "../functions/rich-delivery-review/review.mjs";
 
 const token = "10000000-0000-4000-8000-000000000001";
@@ -44,7 +45,7 @@ async function recover({ cents = 2450, sessionTotal = cents, campaign = BLACK_FR
   let handler;
   runInNewContext(stripTypeScriptTypes(source.replace(/^import[^\n]*;/gm, "")), {
     Deno: { serve(fn) { handler = fn; }, env: { get: () => "sk_live_fixture" } },
-    Stripe: class { constructor() { return stripe; } }, createClient: () => db, validGiftPayment,
+    Stripe: class { constructor() { return stripe; } }, createClient: () => db, validGiftPayment, giftOrganicFields, writeOrganicOrder,
     URL, Response, crypto: globalThis.crypto, console,
   });
   const result = await handler(new Request("https://fixture.invalid/?token=" + token + "&session_id=cs_fixture"));

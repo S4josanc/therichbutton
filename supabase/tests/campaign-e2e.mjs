@@ -253,3 +253,57 @@ test('multiple attempts at an incomplete or failed purchase count as one click p
   assert.deepEqual(page.events.map(x=>x.event), ['page_view','gift_checkout_click']);
   assert.equal(page.checkouts.length,2);
 });
+
+test('organic Gift navigation, cancellation and repeated checkout use one editorial label', async () => {
+  const utm = 'utm_source=pinterest&utm_medium=organic_social&utm_campaign=christmas_2026&utm_content=day-01';
+  const id = 'pinterest_christmas_2026_day-01';
+  const article = render('/rich-gift.html?' + utm);
+  assert.deepEqual(article.events.filter(e => e.organic_post_id), [
+    {event:'organic_landing',page:'rich-gift',organic_post_id:id}]);
+  const formUrl = article.link('.button');
+  assert.equal(new URL(formUrl).searchParams.get('trb_post'), id);
+  for (const url of [formUrl,formUrl + '&checkout=cancelled']) {
+    const gift = render(url);
+    await gift.submit();
+    await gift.submit();
+    assert.equal(gift.checkouts.length, 2);
+    assert.ok(gift.checkouts.every(c => c.payload.organic_post_id === id && !c.payload.campaign_ad));
+    assert.deepEqual(gift.events.filter(e => e.organic_post_id), [
+      {event:'organic_checkout_click',page:'gift',organic_post_id:id}]);
+    const generic = gift.events.filter(e => !e.organic_post_id);
+    const expected = [{event:'gift_checkout_click',page:'gift'}];
+    if (url === formUrl) expected.unshift({event:'page_view',page:'gift'});
+    assert.deepEqual(generic, expected);
+  }
+  const overview = render('/rich-gift.html?trb_post=' + id);
+  assert.deepEqual(overview.events, [{event:'page_view',page:'rich-gift'}]);
+  const edition = render('/gift.html?tier=gold&trb_post=' + id);
+  assert.deepEqual(edition.events, []);
+});
+
+test('ordinary edition Payment Links and Black Friday checkout keep the originating post', async () => {
+  const id = 'facebook_black_friday_2026_black-friday';
+  const home = render('/?utm_source=facebook&utm_medium=organic_social&utm_campaign=black_friday_2026&utm_content=black-friday');
+  await settle();
+  for (const edition of ['gold','platinum','diamond']) {
+    const link = new URL(home.link('[data-edition-pay="' + edition + '"]'));
+    assert.equal(link.origin, 'https://buy.stripe.com');
+    assert.equal(link.searchParams.toString(), 'client_reference_id=trb_org_' + id);
+  }
+  const gift = render('/gift.html?tier=gold&trb_post=' + id, {offerActive:true});
+  await settle();
+  const select = gift.document.getElementById('tier');
+  select.value = 'diamond';
+  select.dispatchEvent(new gift.document.defaultView.Event('change'));
+  const url = new URL(gift.link('#editionPurchaseLink'));
+  assert.equal(url.searchParams.get('trb_post'), id);
+  assert.equal(url.hash, '#editionCheckoutBox');
+  gift.document.getElementById('editionPurchaseLink').click();
+  await settle();
+  assert.equal(gift.checkouts[0].endpoint, 'rich-edition-checkout');
+  assert.equal(gift.checkouts[0].payload.organic_post_id, id);
+  assert.equal(gift.checkouts[0].payload.edition, 'diamond');
+  assert.deepEqual(gift.events.filter(e => e.organic_post_id), [
+    {event:'organic_checkout_click',page:'gift',organic_post_id:id}]);
+  assert.deepEqual(gift.redirects, [mockStripe]);
+});

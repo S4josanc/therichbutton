@@ -33,13 +33,20 @@ Deno.serve(async(req:Request)=>{
    );
    return reply({ meta });
  }
+ if (payload.action === "organic_report") {
+   const { data, error } = await db.rpc("rich_organic_report", { p_before_deadline: payload.before_deadline === true });
+   if (error) return reply({ error: "Organic report unavailable" }, 503);
+   return reply({ posts: data });
+ }
  if (payload.action === "campaign_report") {
    const { data, error } = await db.rpc("rich_campaign_report");
    if (error) return reply({ error: "Campaign report unavailable" }, 503);
    return reply({ ads: data });
  }
  if(payload.action==="overview"){
- const [orders,throne,audit,complimentary,analytics]=await Promise.all([db.from("rich_gift_orders").select("id,status,amount_cents,currency,recipient_name,buyer_email,paid_at,created_at,referral_kind,referral_token,wall_opt_in,wall_alias").order("created_at",{ascending:false}).limit(100),db.from("rich_throne_state").select("*").eq("id",1).single(),db.from("rich_admin_audit").select("action,reason,created_at").order("created_at",{ascending:false}).limit(20),db.from("rich_complimentary_gifts").select("id,edition,recipient_name,sender_name,created_at,revoked_at,token").order("created_at",{ascending:false}).limit(100),db.from("rich_analytics_events").select("event_type,page,gift_kind,gift_id,created_at").gte("created_at",new Date(Date.now()-30*86400000).toISOString()).order("created_at",{ascending:false}).limit(10000)]);
+ const [orders,throne,audit,complimentary,analytics]=await Promise.all([db.from("rich_gift_orders").select("id,status,amount_cents,currency,recipient_name,buyer_email,paid_at,created_at,referral_kind,referral_token,wall_opt_in,wall_alias").order("created_at",{ascending:false}).limit(100),db.from("rich_throne_state").select("*").eq("id",1).single(),db.from("rich_admin_audit").select("action,reason,created_at").order("created_at",{ascending:false}).limit(20),db.from("rich_complimentary_gifts").select("id,edition,recipient_name,sender_name,created_at,revoked_at,token").order("created_at",{ascending:false}).limit(100),db.from("rich_analytics_events").select("event_type,page,gift_kind,gift_id,created_at")
+   .in("event_type", ["page_view", "gift_open", "gift_reveal", "gift_cta_click"])
+   .gte("created_at",new Date(Date.now()-30*86400000).toISOString()).order("created_at",{ascending:false}).limit(10000)]);
  if(orders.error||throne.error||audit.error||complimentary.error||analytics.error)return reply({error:"Unable to load dashboard"},500);
  const paid=orders.data.filter(o=>o.status==="paid");const referralPaid={};for(const o of paid){if(o.referral_token){const k=o.referral_kind+":"+o.referral_token;referralPaid[k]=(referralPaid[k]||0)+1}}
  const events=analytics.data||[];const count=(type,page)=>events.filter(e=>e.event_type===type&&(!page||e.page===page)).length;const byGift={};for(const e of events){if(!e.gift_id)continue;const k=e.gift_kind+":"+e.gift_id;if(!byGift[k])byGift[k]={opens:0,reveals:0,cta_clicks:0};if(e.event_type==="gift_open")byGift[k].opens++;if(e.event_type==="gift_reveal")byGift[k].reveals++;if(e.event_type==="gift_cta_click")byGift[k].cta_clicks++}const daily={};for(const e of events){if(e.event_type!=="page_view")continue;const d=e.created_at.slice(0,10);daily[d]=(daily[d]||0)+1}return reply({analytics:{page_views:count("page_view"),home_views:count("page_view","home"),gift_opens:count("gift_open"),reveals:count("gift_reveal"),cta_clicks:count("gift_cta_click"),by_gift:byGift,referral_paid:referralPaid,daily:Object.entries(daily).sort((a,b)=>a[0].localeCompare(b[0]))},orders:orders.data,throne:throne.data,audit:audit.data,complimentary:complimentary.data,summary:{orders:orders.data.length,complimentary:complimentary.data.filter(g=>!g.revoked_at).length,paid:paid.length,revenue_cents:paid.reduce((s,o)=>s+o.amount_cents,0)},notice:"Orders limited to 100. Analytics covers up to 10,000 events from the last 30 days; these are events, not unique people. Stripe reconciliation is not connected."});

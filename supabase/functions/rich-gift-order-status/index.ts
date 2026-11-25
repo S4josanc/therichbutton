@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import {validGiftPayment} from "../_shared/gift-payment.mjs";
+import {writeOrganicOrder} from "../_shared/organic-order.mjs";
+import {validGiftPayment,giftOrganicFields} from "../_shared/gift-payment.mjs";
 const cors={"Access-Control-Allow-Origin":"https://therichbutton.com","Access-Control-Allow-Methods":"GET,OPTIONS","Access-Control-Allow-Headers":"content-type","Cache-Control":"no-store","Content-Type":"application/json"};
 const response=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
 Deno.serve(async(req:Request)=>{
@@ -20,8 +21,16 @@ Deno.serve(async(req:Request)=>{
     const stripe=new Stripe(key,{apiVersion:"2024-12-18.acacia"});
     const session=await stripe.checkout.sessions.retrieve(sessionId);
     if(session.client_reference_id===order.id && validGiftPayment(session, order)){
-     const {error:updateError}=await db.from("rich_gift_orders").update({status:"paid",buyer_email:session.customer_details?.email||session.customer_email||null,stripe_payment_intent_id:typeof session.payment_intent==="string"?session.payment_intent:null,gift_token:crypto.randomUUID(),paid_at:new Date().toISOString()}).eq("id",order.id).eq("status","pending");
-     if(updateError)console.error("status recovery update failed",updateError);
+     const paidAt = new Date().toISOString();
+     const payment = {
+       status:"paid", paid_at:paidAt, gift_token:crypto.randomUUID(),
+       buyer_email:session.customer_details?.email || session.customer_email || null,
+       stripe_payment_intent_id:typeof session.payment_intent === "string" ? session.payment_intent : null,
+     };
+     const saved = await writeOrganicOrder("rich_gift_orders", giftOrganicFields(session, paidAt),
+       (optional:Record<string, string>) => db.from("rich_gift_orders").update({...payment, ...optional})
+         .eq("id", order.id).eq("status", "pending"));
+     if(saved.error)console.error("status recovery update failed",saved.error);
      const refreshed=await db.from("rich_gift_orders").select(fields).eq("id",order.id).single();
      if(!refreshed.error&&refreshed.data)order=refreshed.data;
     }
