@@ -116,8 +116,8 @@ does not require changing a Stripe coupon or any of those links.
 
 ## Gift advertising reports
 
-After the campaign catalogue and Black Friday price migrations, apply
-`migrations/20261125155000_gift_campaign_funnel.sql` and deploy
+After the campaign catalogue and Black Friday price migrations, apply in order the three migrations for the London creatives, buyer event types and
+gift campaign report (versions 20261125163934–20261125163950), then deploy
 `rich-analytics` and `rich-gift-checkout` with the updated shared ad catalogue.
 The private campaign report distinguishes page loads, first personalization
 and payment clicks per loaded form, live Stripe sessions, and confirmed sales.

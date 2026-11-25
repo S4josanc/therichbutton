@@ -1,31 +1,5 @@
--- Only non-identifying buyer-side events can carry a campaign label.
-ALTER TABLE public.rich_analytics_events
-  DROP CONSTRAINT rich_analytics_events_event_type_check,
-  DROP CONSTRAINT rich_analytics_events_check,
-  ADD CONSTRAINT rich_analytics_events_event_type_check CHECK (
-    event_type IN ('page_view', 'gift_open', 'gift_reveal', 'gift_cta_click',
-                   'gift_personalize_start', 'gift_checkout_click')
-  ),
-  ADD CONSTRAINT rich_analytics_events_buyer_action_check CHECK (
-    event_type NOT IN ('gift_personalize_start', 'gift_checkout_click')
-    OR (page IS NOT NULL AND page = 'gift' AND gift_kind IS NULL AND gift_id IS NULL)
-  ),
-  ADD CONSTRAINT rich_analytics_events_campaign_context_check CHECK (
-    campaign_ad IS NULL OR (
-      gift_kind IS NULL AND gift_id IS NULL AND page IS NOT NULL AND (
-        (event_type = 'page_view' AND page IN ('home', 'rich-gift', 'gift'))
-        OR (event_type IN ('gift_personalize_start', 'gift_checkout_click') AND page = 'gift')
-      )
-    )
-  );
-
-INSERT INTO public.rich_campaign_ads (ad_code, source, medium, campaign, ad_title, target_city, active)
-VALUES
-  ('envelope-v2-london', 'meta', 'paid_social', 'christmas_2026', 'Envelope reveal', 'London', true),
-  ('button-v2-london', 'meta', 'paid_social', 'christmas_2026', 'The button', 'London', true);
-
--- Replace the return signature atomically, retaining existing field names and access.
-DROP FUNCTION public.rich_campaign_report();
+set local lock_timeout='3s';
+ALTER FUNCTION public.rich_campaign_report() RENAME TO rich_campaign_report_pre_gift_funnel;
 CREATE FUNCTION public.rich_campaign_report()
 RETURNS TABLE (
   campaign text, ad_code text, ad_title text, target_city text,
