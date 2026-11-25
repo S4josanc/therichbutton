@@ -7,6 +7,10 @@
   #metaSummary .metric strong[data-missing] { font: 16px/1.4 Arial, sans-serif; color: #bfb19b }
   #metaSummary > p { margin: 6px 0 }
   #metaEmptyHelp a { color: #f0d299 }
+  #campaignTotals:not([hidden]) { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 16px; margin: 22px 0 }
+  #campaignTotals dt { color: #c5b69f; font-size: 12px; line-height: 1.4 }
+  #campaignTotals dd { margin: 5px 0 0; color: #f0d299; font: 28px Georgia; font-variant-numeric: tabular-nums }
+  #campaignTable table { min-width: 800px }
   #metaRefresh:disabled { opacity: .6; cursor: wait }
   @media (max-width: 740px) { #metaSummary .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
 </style></head><body><header><a href="./">← THE RICH BUTTON</a><strong>R.</strong></header><main><section id="login" class="panel"><span class="eyebrow">PRIVATE ACCESS · ADMINISTRATION</span><h1>The Private Vault.</h1><p>Authorized access only.</p><form id="loginForm"><label for="email">EMAIL</label><input id="email" type="email" value="info@akademiaene.com" autocomplete="username" required><label for="password">PASSWORD</label><input id="password" type="password" autocomplete="current-password" required><p><button type="submit">UNLOCK THE VAULT </button></p><p id="loginError" class="status" role="alert"></p></form></section><section id="dashboard" hidden><div class="actions"><div><span class="eyebrow">THE RICH BUTTON · PRIVATE ADMINISTRATION</span><h1>Command Centre.</h1></div><button class="secondary" id="logout">LOG OUT</button></div>
@@ -27,17 +31,30 @@
   <p id="metaEmptyHelp" hidden>Si esperabas gasto, comprueba la columna Entrega en el <a href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4729769513972199" target="_blank" rel="noopener noreferrer">Administrador de anuncios</a>.</p>
   <p id="metaAdvice" hidden></p>
 </section>
-<section class="panel" aria-labelledby="campaignTitle">
-<h2 id="campaignTitle">Website campaigns · The Rich Gift</h2>
-<p>Last 30 calendar dates in UTC, including today. Home views count tagged page loads. Checkouts count live Stripe sessions for orders started during this period. Paid gifts count those orders currently marked paid. Cities show the intended audience.</p>
-<p id="campaignTotals" hidden>Tagged home views <strong id="adSummaryViews">—</strong> · Checkouts <strong id="adSummaryCheckouts">—</strong> · Paid gifts <strong id="adSummaryPaid">—</strong></p>
-<p class="muted" id="campaignStatus" role="status">Loading campaign figures…</p>
-<div id="campaignTable" class="table-wrap" hidden>
-<table aria-labelledby="campaignTitle">
-<thead><tr><th scope="col">CAMPAIGN</th><th scope="col">AD</th><th scope="col">TARGET CITY</th><th scope="col">HOME VIEWS</th><th scope="col">CHECKOUTS</th><th scope="col">PAID GIFTS</th></tr></thead>
-<tbody id="campaignRows"></tbody>
-</table>
-</div>
+<section class="panel" aria-labelledby="campaignTitle" lang="es">
+  <h2 id="campaignTitle">Del anuncio a la compra · The Rich Gift</h2>
+  <p>Actividad atribuida a los anuncios en los últimos 30 días naturales, incluido hoy (UTC). Las visitas cuentan cargas de página. Se puede llegar directamente a la ficha o al formulario.</p>
+  <dl id="campaignTotals" hidden>
+    <div><dt>Visitas a la portada</dt><dd id="adSummaryViews">—</dd></div>
+    <div><dt>Visitas a la ficha</dt><dd id="adSummaryOffer">—</dd></div>
+    <div><dt>Accesos al formulario</dt><dd id="adSummaryForm">—</dd></div>
+    <div><dt>Personalizaciones iniciadas</dt><dd id="adSummaryPersonalization">—</dd></div>
+    <div><dt>Intentos de pago</dt><dd id="adSummaryCheckoutClicks">—</dd></div>
+    <div><dt>Sesiones en Stripe</dt><dd id="adSummaryCheckouts">—</dd></div>
+    <div><dt>Compras confirmadas</dt><dd id="adSummaryPaid">—</dd></div>
+  </dl>
+  <p class="muted" id="campaignStatus" role="status">Consultando la actividad de la campaña…</p>
+  <div id="campaignTable" class="table-wrap" tabindex="0" role="region" aria-label="Actividad por anuncio y ciudad objetivo" hidden>
+    <table aria-label="Actividad por anuncio y ciudad objetivo">
+      <thead><tr>
+        <th scope="col">Campaña</th><th scope="col">Anuncio</th><th scope="col">Ciudad objetivo</th>
+        <th scope="col">Portada</th><th scope="col">Ficha</th><th scope="col">Formulario</th><th scope="col">Personalizaciones</th>
+        <th scope="col">Intentos de pago</th><th scope="col">Sesiones en Stripe</th><th scope="col">Compras confirmadas</th>
+      </tr></thead>
+      <tbody id="campaignRows"></tbody>
+    </table>
+  </div>
+  <p class="muted">Las visitas a la ficha, los accesos al formulario, las personalizaciones y los intentos de pago se cuentan desde que se activó su medición. El guion (—) indica un dato no disponible. Stripe cuenta las sesiones de pago reales y las compras confirmadas de pedidos iniciados en el periodo.</p>
 </section>
 <section class="panel"><h2>Website Analytics <span style="font:12px Arial;color:#b9a47f">· LAST 30 DAYS</span></h2><p>Counts page loads and gift interactions, not unique people. No cookies or personal visitor profiles.</p><div class="metrics"><div class="metric"><span>PAGE VIEWS</span><strong id="analyticsViews">—</strong></div><div class="metric"><span>GIFT LINKS OPENED</span><strong id="analyticsOpens">—</strong></div><div class="metric"><span>GIFTS REVEALED</span><strong id="analyticsReveals">—</strong></div><div class="metric"><span>RICH GIFT CLICKS</span><strong id="analyticsClicks">—</strong></div></div><p id="analyticsDaily" class="muted"></p></section>
 <div class="metrics"><div class="metric"><span>COMPLIMENTARY GIFTS</span><strong id="promoCount">—</strong></div><div class="metric"><span>GIFT ORDERS</span><strong id="ordersCount">—</strong></div><div class="metric"><span>PAID GIFTS</span><strong id="paidCount">—</strong></div><div class="metric"><span>CONFIRMED GIFT REVENUE</span><strong id="revenue">—</strong></div><div class="metric"><span>HOME PAGE VIEWS · 30 DAYS</span><strong id="analyticsHome">—</strong><p class="muted">Page loads, not unique visitors</p></div></div><section class="panel"><h2>Wall of Wealth</h2><p>Add a name or alias only when the person has agreed to appear publicly.</p><form id="wallForm"><div class="grid"><div><label for="wallName">NAME OR ALIAS</label><input id="wallName" maxlength="60" required></div><div><label for="wallEdition">EDITION</label><select id="wallEdition" style="width:100%;padding:14px;background:#090807;border:1px solid #7e6542;color:#f5e1bd"><option value="rich-gift">Rich Gift · pink</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select></div></div><label for="wallCountry">COUNTRY CODE (OPTIONAL)</label><input id="wallCountry" maxlength="2" pattern="[A-Za-z]{2}" placeholder="e.g. ES for Spain" style="text-transform:uppercase"><p><button type="submit">ADD TO WALL</button></p></form><p id="wallAdminStatus" role="status"></p><h3>Gift buyers who opted in</h3><div id="wallRequests" class="muted"></div><h3 id="wallOrderHeading">Orden del Wall</h3><p id="wallOrderHelp">Las tres primeras posiciones aparecen en portada. Usa Subir y Bajar para elegirlas y guarda el orden cuando esté listo.</p><div class="wall-order-toolbar"><button type="button" id="wallSaveOrder" disabled>Guardar orden</button><button type="button" id="wallCancelOrder" class="secondary" disabled>Cancelar cambios</button><span id="wallOrderState" class="muted">Orden publicado.</span></div><div id="wallAdminList" role="list" aria-labelledby="wallOrderHeading" aria-describedby="wallOrderHelp"></div></section><section class="panel"><h2>Complimentary Gifts</h2><p>Issue genuine Gold, Platinum, Diamond or Rich Gift experiences without charging the recipient. They look like normal gifts; internally they are recorded as €0 promotional gifts, never as sales.</p><form id="complimentaryForm"><div class="grid"><div><label for="promoEdition">EDITION</label><select id="promoEdition" required style="width:100%;padding:14px;background:#090807;border:1px solid #7e6542;border-radius:5px;color:#f5e1bd"><option value="rich-gift">The Rich Gift</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select></div><div><label for="promoRecipient">RECIPIENT NAME</label><input id="promoRecipient" maxlength="70" required></div></div><label for="promoSender">FROM (OPTIONAL)</label><input id="promoSender" maxlength="70" placeholder="The Rich Button"><label for="promoMessage">DEDICATION (OPTIONAL)</label><textarea id="promoMessage" rows="2" maxlength="180"></textarea><div style="margin:13px 0 22px"><span style="display:block;color:#d9bc87;font-size:10px;letter-spacing:.1em;margin-bottom:10px">NEED INSPIRATION? TAP TO CHANGE THE MESSAGE</span><button type="button" id="promoSurpriseMessage" class="secondary" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:15px;line-height:1.6"><span id="promoSuggestedMessage">Money can't buy happiness. So I bought you this instead.</span><span style="font-size:22px">↻</span></button><p class="muted">Tap to use another funny dedication, or write your own above.</p></div><p><button type="submit">CREATE COMPLIMENTARY GIFT </button></p><p id="promoStatus" class="status" role="status"></p><div id="promoResult" hidden><label>PRIVATE GIFT LINK</label><input id="promoLink" readonly><p><button type="button" id="promoCopy" class="secondary">COPY GIFT LINK</button></p></div></form><h2 style="margin-top:25px">Issued gifts</h2><label for="giftSearch">FIND A GIFT</label><input id="giftSearch" type="search" placeholder="Search by recipient or edition" autocomplete="off"><p id="giftSearchStatus" class="muted" role="status"></p><p id="issuedCopyStatus" class="status" role="status" aria-live="polite"></p><div id="issuedCopyFallback" hidden><label for="issuedCopyLink">COPY THIS PRIVATE LINK</label><input id="issuedCopyLink" readonly></div><div class="table-wrap"><table><thead><tr><th>DATE</th><th>EDITION</th><th>RECIPIENT</th><th>VALUE RECEIVED</th><th>LINK OPENS · 30D</th><th>REVEALS · 30D</th><th>GIFT CLICKS · 30D</th><th>REFERRED SALES</th><th>ACTIONS</th></tr></thead><tbody id="promoRows"><tr><td colspan="5">No gifts issued yet</td></tr></tbody></table></div></section><div class="grid"><section class="panel"><h2>The Richest Button</h2><p id="ownerDisplay">Loading…</p><p class="muted">Manual correction changes the display record only. It does not create a payment or verify ownership.</p><form id="throneForm"><label for="ownerName">OWNER NAME</label><input id="ownerName" maxlength="70" required><label for="ownerCountry">COUNTRY (OPTIONAL)</label><input id="ownerCountry" maxlength="70"><label for="ownerAmount">AMOUNT IN EUROS</label><input id="ownerAmount" type="number" min="100" step="1" required><label for="reason">REASON FOR CORRECTION</label><textarea id="reason" rows="3" maxlength="300" required placeholder="Why is this correction needed?"></textarea><p><button type="submit">SAVE MANUAL CORRECTION</button></p><p id="throneStatus" class="status" role="status"></p></form></section><section class="panel"><h2>Administration</h2><p><strong>Gift orders:</strong> the latest 100 records from Supabase, including paid and pending status.</p><p><strong>Stripe payments:</strong> payment reconciliation and refunds will appear here after the Stripe connection is verified.</p><p><strong>Website analytics:</strong> the panel shows recorded page loads and gift interactions from the last 30 days. Page views are not a count of unique visitors.</p><p><strong>Security:</strong> access requires a verified Supabase user authorized for this account. Corrections are recorded in an audit log.</p><h2 style="margin-top:25px">Recent corrections</h2><div id="audit" class="muted">No changes recorded.</div></section></div><section class="panel"><h2>Recent gift orders</h2><p id="orderStatusSummary" role="status" class="muted">Loading order status…</p><p class="muted">Pending means payment is not yet confirmed. Paid means the order is recorded as paid. Email delivery and gift-link status are not shown here yet.</p><div class="table-wrap"><table><thead><tr><th>DATE</th><th>RECIPIENT</th><th>STATUS</th><th>AMOUNT</th><th>BUYER EMAIL</th></tr></thead><tbody id="orderRows"></tbody></table></div><p class="muted">Displays the latest 100 gift orders, not the complete Stripe payment ledger.</p></section></section></main><script type="module">import { createWallOrderAdmin } from './admin-wall-order.js?v=20261118';import{createClient}from'https://esm.sh/@supabase/supabase-js@2.49.4';const supabase=createClient('https://mhrebbssqamkuulzqcki.supabase.co','sb_publishable_ciIqbUv4EV1yZgjelooxUw_V8jGdTBM');const endpoint='https://mhrebbssqamkuulzqcki.supabase.co/functions/v1/rich-admin';const login=document.getElementById('login'),dashboard=document.getElementById('dashboard');async function call(action,data={}){const {data:sessionData}=await supabase.auth.getSession();const token=sessionData.session?.access_token;if(!token)throw Error('Session expired');const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({action,...data})});const result=await response.json();if(!response.ok){const error=Error(result.error||'Request failed');error.status=response.status;throw error}return result}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function filterIssuedGifts(){const query=document.getElementById('giftSearch').value.trim().toLocaleLowerCase(),rows=[...document.querySelectorAll('#promoRows [data-gift-row]')];let visible=0;rows.forEach(row=>{const cells=row.cells,match=!query||[cells[1].textContent,cells[2].textContent].some(v=>v.toLocaleLowerCase().includes(query));row.hidden=!match;if(match)visible++});document.getElementById('giftSearchStatus').textContent=query?visible+' matching gift'+(visible===1?'':'s'):''}document.getElementById('giftSearch').addEventListener('input',filterIssuedGifts);const wallAdmin = createWallOrderAdmin({ call });
@@ -122,40 +139,67 @@ async function loadMetaReport() {
   }
 }
 metaRefresh.addEventListener('click', loadMetaReport);
+let campaignRequestId = 0;
 async function loadCampaignReport() {
+  const requestId = ++campaignRequestId;
   const status = document.getElementById('campaignStatus');
   const table = document.getElementById('campaignTable');
   const body = document.getElementById('campaignRows');
   const totals = document.getElementById('campaignTotals');
-  if (totals) totals.hidden = true;
+  const metrics = [
+    ['home_views', 'adSummaryViews'],
+    ['gift_offer_views', 'adSummaryOffer'],
+    ['gift_form_views', 'adSummaryForm'],
+    ['personalization_starts', 'adSummaryPersonalization'],
+    ['checkout_clicks', 'adSummaryCheckoutClicks'],
+    ['checkout_starts', 'adSummaryCheckouts'],
+    ['paid_gifts', 'adSummaryPaid']
+  ];
+  totals.hidden = true;
   table.hidden = true;
-  status.textContent = 'Loading campaign figures…';
   body.replaceChildren();
+  status.textContent = 'Consultando la actividad de la campaña…';
   try {
     const { ads } = await call('campaign_report');
-    if (!Array.isArray(ads)) throw Error('Campaign report unavailable');
+    if (requestId !== campaignRequestId) return;
+    if (!Array.isArray(ads)) throw Error('Informe no disponible');
+    if (!ads.length) {
+      status.textContent = 'Todavía no hay anuncios registrados.';
+      return;
+    }
+    const sums = metrics.map(() => 0);
     for (const ad of ads) {
+      const cells = [ad.campaign, ad.ad_code, ad.target_city];
+      metrics.forEach(([key], index) => {
+        const raw = ad[key];
+        if (raw == null) {
+          cells.push('—');
+          sums[index] = null;
+          return;
+        }
+        const count = Number(raw);
+        if (!/^\d+$/.test(String(raw)) || !Number.isSafeInteger(count)) throw Error('Contador inválido');
+        cells.push(count.toLocaleString('es-ES'));
+        if (sums[index] !== null) sums[index] += count;
+      });
       const row = document.createElement('tr');
-      for (const value of [ad.campaign, ad.ad_code, ad.target_city, ad.home_views, ad.checkout_starts, ad.paid_gifts]) {
+      for (const value of cells) {
         const cell = document.createElement('td');
-        cell.textContent = String(value);
+        cell.textContent = value;
         row.appendChild(cell);
       }
       body.appendChild(row);
     }
-    const values = ads.flatMap(ad => [ad.home_views, ad.checkout_starts, ad.paid_gifts]);
-    if (values.some(value => value === null || value === '' || !Number.isFinite(Number(value)) || Number(value) < 0)) throw Error('Invalid campaign figures');
-    if (totals && ads.length) {
-      for (const [id, key] of [['adSummaryViews','home_views'],['adSummaryCheckouts','checkout_starts'],['adSummaryPaid','paid_gifts']]) {
-        const total = ads.reduce((sum, ad) => sum + Number(ad[key]), 0);
-        document.getElementById(id).textContent = total.toLocaleString('es-ES');
-      }
-      totals.hidden = false;
-    }
-    table.hidden = ads.length === 0;
-    status.textContent = ads.length ? '' : 'No campaign ads configured.';
+    metrics.forEach(([, id], index) => {
+      document.getElementById(id).textContent = sums[index]?.toLocaleString('es-ES') ?? '—';
+    });
+    totals.hidden = false;
+    table.hidden = false;
+    status.textContent = '';
   } catch {
-    status.textContent = 'Campaign figures are temporarily unavailable.';
+    if (requestId !== campaignRequestId) return;
+    body.replaceChildren();
+    status.textContent = 'Ahora mismo no se puede consultar el informe de campaña.';
   }
 }
 async function load(){const data=await call('overview');await loadWall();const reqs=data.orders.filter(o=>o.status==='paid'&&o.wall_opt_in&&o.wall_alias);const wr=document.getElementById('wallRequests');wr.replaceChildren();for(const o of reqs){const p=document.createElement('p');p.textContent=o.wall_alias+' · Rich Gift · '+new Date(o.created_at).toLocaleDateString('en-GB');wr.append(p)}if(!reqs.length)wr.textContent='No paid requests yet.';login.hidden=true;dashboard.hidden=false;void loadCampaignReport();if(!metaRequested)void loadMetaReport();document.getElementById('analyticsViews').textContent=data.analytics.page_views;document.getElementById('analyticsOpens').textContent=data.analytics.gift_opens;document.getElementById('analyticsReveals').textContent=data.analytics.reveals;document.getElementById('analyticsClicks').textContent=data.analytics.cta_clicks;document.getElementById('analyticsHome').textContent=data.analytics.home_views;document.getElementById('analyticsDaily').textContent='Recent daily page views: '+(data.analytics.daily.slice(-7).map(([d,n])=>d.slice(5)+': '+n).join(' · ')||'No visits recorded yet');document.getElementById('promoCount').textContent=data.summary.complimentary;const activeGifts=data.complimentary.filter(g=>!g.revoked_at);document.getElementById('promoRows').innerHTML=activeGifts.length?activeGifts.map(g=>{const key='complimentary:'+g.token,stats=data.analytics.by_gift?.[key]||{},sales=data.analytics.referral_paid?.[key]||0;return '<tr data-gift-row><td>'+esc(new Date(g.created_at).toLocaleDateString('en-GB'))+'</td><td>'+esc(g.edition)+'</td><td>'+esc(g.recipient_name)+'</td><td>€0 · Gift</td><td>'+Number(stats.opens||0)+'</td><td>'+Number(stats.reveals||0)+'</td><td>'+Number(stats.cta_clicks||0)+'</td><td>'+Number(sales)+'</td><td><button class="secondary" type="button" data-copy-promo="'+esc(g.token)+'">COPY LINK</button> <button class="secondary" type="button" data-delete-promo="'+esc(g.id)+'" data-recipient="'+esc(g.recipient_name)+'" style="border-color:#b46d63;color:#eab3a7">DELETE</button></td></tr>'}).join(''):'<tr><td colspan="9">No issued gifts</td></tr>';filterIssuedGifts();document.querySelectorAll('[data-copy-promo]').forEach(b=>b.onclick=()=>copyPromo('https://therichbutton.com/open-gift.html?complimentary='+b.dataset.copyPromo,true));document.querySelectorAll('[data-delete-promo]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete the gift for '+b.dataset.recipient+'? Its private link will stop working.'))return;const reason=prompt('Reason for deleting this gift (e.g. Test gift)');if(!reason||!reason.trim())return;try{await call('revoke_complimentary',{id:b.dataset.deletePromo,reason:reason.trim()});document.getElementById('promoStatus').textContent='Gift deleted and link disabled.';await load()}catch(e){document.getElementById('promoStatus').textContent=e.message}});document.getElementById('ordersCount').textContent=data.summary.orders;document.getElementById('paidCount').textContent=data.summary.paid;document.getElementById('revenue').textContent='€'+(data.summary.revenue_cents/100).toLocaleString('en-IE',{minimumFractionDigits:2});const t=data.throne;document.getElementById('ownerDisplay').textContent=t.owner_name+' · '+(t.country||'Country private')+' · €'+(t.amount_cents/100).toLocaleString('en-IE')+(t.verified_payment?' · Verified':' · Illustrative / manual');document.getElementById('ownerName').value=t.owner_name;document.getElementById('ownerCountry').value=t.country||'';document.getElementById('ownerAmount').value=t.amount_cents/100;const orderCounts=data.orders.reduce((counts,o)=>{if(Object.prototype.hasOwnProperty.call(counts,o.status))counts[o.status]++;return counts},{pending:0,paid:0,refunded:0});document.getElementById('orderStatusSummary').textContent=data.orders.length?'Latest '+data.orders.length+' orders: '+orderCounts.pending+' pending · '+orderCounts.paid+' paid · '+orderCounts.refunded+' refunded':'No gift orders recorded yet.';document.getElementById('orderRows').innerHTML=data.orders.length?data.orders.map(o=>'<tr><td>'+esc(new Date(o.created_at).toLocaleDateString('en-GB'))+'</td><td>'+esc(o.recipient_name)+'</td><td>'+esc(o.status)+'</td><td>€'+(o.amount_cents/100).toFixed(2)+'</td><td>'+esc(o.buyer_email||'—')+'</td></tr>').join(''):'<tr><td colspan="5">No gift orders yet</td></tr>';document.getElementById('audit').innerHTML=data.audit.length?data.audit.map(x=>'<p>'+esc(new Date(x.created_at).toLocaleString('en-GB'))+' · '+esc(x.reason)+'</p>').join(''):'No corrections recorded.'}const promoFunnyMessages=[
