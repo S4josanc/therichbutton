@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qLB5wSaK5LTKgBmtl76sBVz5p9/tHpRp9FwVIS+/Xbg=' https://connect.facebook.net; connect-src https://www.facebook.com https://connect.facebook.net; img-src https://www.facebook.com; base-uri 'none'; form-action 'none'">
+  <title>Gift ad measurement</title>
+</head>
+<body><script>// Meta code runs only in this opaque, script-only sandbox owned by the consent relay.
+(() => {
+  'use strict';
+  if (window.parent === window || window.origin !== 'null' || location.pathname !== '/gift-ad-runtime.html' ||
+      location.hash || document.referrer) return;
+  const query = [...new URLSearchParams(location.search)];
+  if (query.length && (query.length !== 1 || query[0][0] !== 'fbclid' || !/^[A-Za-z0-9_-]{16,500}$/.test(query[0][1]))) return;
+  const expectedParent = new URL(location.href).origin;
+  function connect(e) {
+    if (e.source !== window.parent || e.origin !== expectedParent || e.data !== 'rich-gift-ad-connect' || e.ports.length !== 1) return;
+    window.removeEventListener('message', connect);
+    const port = e.ports[0];
+    let pixelId, sdkReady = false;
+    port.onmessage = ({data}) => {
+      if (!data) return;
+      if (!pixelId && /^\d{5,22}$/.test(data.pixelId)) {
+        pixelId = data.pixelId;
+        function fbq() {
+          if (fbq.callMethod) fbq.callMethod.apply(fbq, arguments);
+          else fbq.queue.push(arguments);
+        }
+        fbq.push = fbq;
+        fbq.loaded = true;
+        fbq.version = '2.0';
+        fbq.queue = [];
+        window.fbq = window._fbq = fbq;
+        fbq('set', 'autoConfig', false, pixelId);
+        fbq('init', pixelId);
+        const sdk = document.createElement('script');
+        sdk.async = true;
+        sdk.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        sdk.referrerPolicy = 'no-referrer';
+        sdk.onload = () => {
+          sdkReady = typeof fbq.callMethod === 'function';
+          if (sdkReady) port.postMessage({ready:true});
+        };
+        document.head.append(sdk);
+        return;
+      }
+      const {name, seq} = data;
+      if (!sdkReady || !Number.isSafeInteger(seq) || !['ViewContent','InitiateCheckout','Purchase'].includes(name)) return;
+      const details = {content_ids:['rich-gift'], content_type:'product'};
+      try {
+        if (name === 'Purchase') {
+          if (data.currency !== 'EUR' || !Number.isFinite(data.value) || data.value <= 0 || data.value > 10000 ||
+              !/^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(data.eventId)) return;
+          details.value = data.value;
+          details.currency = 'EUR';
+          window.fbq('trackSingle', pixelId, name, details, {eventID:data.eventId});
+        } else window.fbq('trackSingle', pixelId, name, details);
+        port.postMessage({seq, ok:true});
+      } catch { port.postMessage({seq, ok:false}); }
+    };
+  }
+  window.addEventListener('message', connect);
+})();
+</script></body>
+</html>

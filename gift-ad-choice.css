@@ -1,0 +1,10 @@
+.gift-ad-choice[hidden], .gift-ad-settings[hidden] { display:none !important }
+.gift-ad-choice { padding:16px max(5%, calc((100% - 1090px) / 2)); color:#f5eddf; font:14px/1.5 Arial,sans-serif; background:#211d19; border-block:1px solid #6d604c }
+.gift-ad-choice > strong { display:block; font-size:16px }
+.gift-ad-choice p { margin:4px 0 10px; max-width:85ch; color:#eee0ca; font-size:14px; line-height:1.5 }
+.gift-ad-choice a, .gift-ad-settings { color:#ead2a9 }
+.gift-ad-choice > div { display:flex; flex-wrap:wrap; gap:9px }
+.gift-ad-choice button { width:auto; min-width:92px; min-height:44px; margin:0; padding:8px 16px; border:1px solid #b69c70; border-radius:5px; color:#f6e3c0; background:#29231c; font:600 14px Arial,sans-serif; letter-spacing:normal; text-transform:none; cursor:pointer }
+button.gift-ad-settings { display:inline-block; width:auto; min-height:44px; padding:8px 0; margin:0 15px; background:none; border:0; color:#ead2a9; font:14px Arial,sans-serif; letter-spacing:normal; text-decoration:underline; cursor:pointer }
+.gift-ad-status { align-self:center; font:13px/1.5 Arial,sans-serif; color:#d5caba }
+.gift-ad-choice :focus-visible, .gift-ad-settings:focus-visible { outline:2px solid #fff0bc; outline-offset:3px }
