@@ -16,12 +16,14 @@ const ad = 'vault-v1-los-angeles';
 const tags = 'utm_source=meta&utm_medium=paid_social&utm_campaign=christmas_2026&utm_content=' + ad + '&utm_term=los-angeles';
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-function render(url, { failedCheckout = false, offerActive = false, staleGiftQuote = false } = {}) {
+function render(url, { failedCheckout = false, offerActive = false, staleGiftQuote = false, storageBlocked = false } = {}) {
   const location = new URL(url, origin);
   assert.equal(location.origin, origin);
   const name = location.pathname.slice(1) || 'index.html';
   assert.ok(['index.html', 'gift.html', 'rich-gift.html', 'open-gift.html'].includes(name));
   const { document, window: dom } = parseHTML(fs.readFileSync(new URL(name, siteRoot), 'utf8'));
+  const panel = document.getElementById('paidGiftPanel');
+  if (panel) panel.scrollIntoView = () => {};
   const events = [], checkouts = [], redirects = [];
   location.assign = location.replace = target => { redirects.push(target); };
   // Supply the browser properties required by the real purchase and gift handlers.
@@ -33,7 +35,7 @@ function render(url, { failedCheckout = false, offerActive = false, staleGiftQuo
   const context = vm.createContext({
     document, location, URL, URLSearchParams, CustomEvent: dom.CustomEvent, Event: dom.Event,
     AbortSignal, crypto: webcrypto, navigator: { userAgent: 'offline-test' }, matchMedia: () => ({ matches: true }),
-    sessionStorage: { setItem(k,v) { session.set(k,v); }, getItem(k) { return session.get(k) ?? null; } },
+    sessionStorage: { setItem(k,v) { if (storageBlocked) throw Error("Storage unavailable"); session.set(k,v); }, getItem(k) { return session.get(k) ?? null; } },
     innerHeight: 1000, addEventListener() {}, setTimeout() {}, clearTimeout() {},
     fetch: async (input, options = {}) => {
       const endpoint = new URL(input).pathname.split('/').pop();
@@ -99,7 +101,7 @@ test('tagged home → gift explainer → checkout, without leaking the full URL 
   const explainerUrl = home.link('.gift-feature__link');
   assert.equal(explainerUrl, origin + '/rich-gift.html?trb_ad=' + ad);
   const explainer = render(explainerUrl);
-  assert.deepEqual(explainer.events, []);
+  assert.deepEqual(explainer.events, [{event:'page_view',page:'rich-gift',campaign_ad:ad}]);
   const giftUrl = explainer.link('a.button[href*="gift.html?tier="]');
   assert.equal(giftUrl, origin + '/gift.html?tier=rich-gift&trb_ad=' + ad);
   const gift = render(giftUrl);
@@ -108,7 +110,10 @@ test('tagged home → gift explainer → checkout, without leaking the full URL 
     recipient: 'Fixture recipient', sender: '', message: '', expected_amount_cents:4900, campaign_ad: ad, wall_opt_in: false, wall_alias: null
   } }]);
   assert.deepEqual(gift.redirects, [mockStripe]);
-  assert.deepEqual(gift.events, []);
+  assert.deepEqual(gift.events, [
+    {event:'page_view',page:'gift',campaign_ad:ad},
+    {event:'gift_checkout_click',page:'gift',campaign_ad:ad}
+  ]);
 });
 
 test('an ordinary visit and its checkout have no ad association', async () => {
@@ -152,7 +157,7 @@ test('a failed checkout after cancellation remains retryable without a purchase 
   assert.match(gift.document.querySelector('#checkoutNote').textContent, /could not confirm/i);
   assert.equal(gift.document.querySelector('#buyRichGift').disabled, false);
   assert.deepEqual(gift.redirects, []);
-  assert.deepEqual(gift.events, []);
+  assert.deepEqual(gift.events, [{event:'gift_checkout_click',page:'gift',campaign_ad:ad}]);
 });
 
 test('the direct gift CTA keeps the tag but an incomplete form never starts checkout', async () => {
@@ -208,4 +213,43 @@ test('the promotional edition CTA uses the selected product and an idempotency k
   await settle();
   assert.equal(regular.link('#editionPurchaseLink'),'https://buy.stripe.com/9B67sMabl99RcJV4IR9AA0n');
   assert.equal(regular.document.querySelector('[data-bf-banner]').hidden,true);
+});
+
+test('direct creative links retain only the approved ad across landing and purchase', async () => {
+  for (const code of ['envelope-v2-london', 'button-v2-london']) {
+    const utm = new URLSearchParams({utm_source:'meta', utm_medium:'paid_social', utm_campaign:'christmas_2026', utm_content:code, utm_term:'london', fbclid:'private-click-id'});
+    const offer = render('/rich-gift.html?' + utm);
+    assert.deepEqual(offer.events, [{event:'page_view',page:'rich-gift',campaign_ad:code}]);
+    const url = offer.link('a.button[href*="gift.html?tier="]');
+    assert.equal(url, origin + '/gift.html?tier=rich-gift&trb_ad=' + code);
+    for (const entry of [url, '/gift.html?tier=rich-gift&' + utm]) {
+      const gift = render(entry, {storageBlocked:true});
+      const name = gift.document.getElementById('name');
+      for (const value of ['E','Example recipient']) {
+        name.value = value;
+        name.dispatchEvent(new gift.document.defaultView.Event('input'));
+      }
+      await gift.submit();
+      assert.deepEqual(gift.events, ['page_view','gift_personalize_start','gift_checkout_click']
+        .map(event => ({event,page:'gift',campaign_ad:code})));
+      assert.equal(gift.checkouts[0].payload.campaign_ad,code);
+      assert.deepEqual(gift.redirects,[mockStripe]);
+    }
+  }
+});
+
+test('private order, referral, edition and test entry pages do not enter the paid gift funnel', () => {
+  for (const extra of ['order=mock-private','stripe_test=1','referral=mock-private','tier=gold','tier=diamond','gift_token=token','#gift=sample']) {
+    const page = render('/gift.html?' + tags + '&' + extra);
+    assert.deepEqual(page.events,[]);
+  }
+});
+
+test('multiple attempts at an incomplete or failed purchase count as one click per loaded form', async () => {
+  const page = render('/gift.html?tier=rich-gift&trb_ad=' + ad, {failedCheckout:true});
+  const button = page.document.getElementById('buyRichGift');
+  button.click(); button.click();
+  await page.submit(); await page.submit();
+  assert.deepEqual(page.events.map(x=>x.event), ['page_view','gift_checkout_click']);
+  assert.equal(page.checkouts.length,2);
 });

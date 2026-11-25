@@ -113,3 +113,13 @@ the storefront. When packaging `rich-delivery-review`, retain its existing priva
 entrypoint and substitute the versioned `review.mjs` and its relative imports.
 Ordinary edition purchases use their original Stripe Payment Links. The promotion
 does not require changing a Stripe coupon or any of those links.
+
+## Gift advertising reports
+
+After the campaign catalogue and Black Friday price migrations, apply
+`migrations/20261125155000_gift_campaign_funnel.sql` and deploy
+`rich-analytics` and `rich-gift-checkout` with the updated shared ad catalogue.
+The private campaign report distinguishes page loads, first personalization
+and payment clicks per loaded form, live Stripe sessions, and confirmed sales.
+New creative labels belong in the catalogue, the server allowlist and
+`campaign.js`. Only public labels propagate to the purchase form.

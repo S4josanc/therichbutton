@@ -16,7 +16,8 @@ create role authenticated;
 create role service_role bypassrls;
 create table public.rich_analytics_events (
   id bigint generated always as identity primary key,
-  event_type text not null, page text not null, gift_kind text, gift_id uuid,
+  event_type text not null check (event_type in ('page_view', 'gift_open', 'gift_reveal', 'gift_cta_click')),
+  page text not null, gift_kind text, gift_id uuid,
   created_at timestamptz not null default now()
 );
 create table public.rich_gift_orders (
@@ -44,6 +45,8 @@ grant select on public.rich_analytics_events, public.rich_gift_orders to service
 
 \ir ../sql/black-friday-2026.sql
 \ir ../sql/black-friday-2026.sql
+
+\ir ../migrations/20261125155000_gift_campaign_funnel.sql
 
 begin;
 set local timezone to 'America/Los_Angeles';
@@ -103,16 +106,24 @@ where stripe_checkout_session_id = 'cs_live_pending_1';
 update public.rich_gift_orders set status = 'paid', paid_at = now()
 where stripe_checkout_session_id = 'cs_live_pending_1';
 
+insert into public.rich_analytics_events (event_type, page, campaign_ad) values
+  ('page_view','rich-gift','envelope-v2-london'),('page_view','gift','envelope-v2-london'),
+  ('gift_personalize_start','gift','envelope-v2-london'),('gift_checkout_click','gift','envelope-v2-london');
 set local role service_role;
 do $checks$
 declare result record;
 begin
-  if (select array_agg(target_city order by target_city) from public.rich_campaign_report())
+  if (select array_agg(distinct target_city order by target_city) from public.rich_campaign_report())
     is distinct from array['Dubai','London','Los Angeles','Miami','New York'] then
     raise exception 'The dashboard must show the five active cities';
   end if;
   if (select count(*) from public.rich_campaign_ads where not active) <> 2 then
     raise exception 'The two original labels must remain archived';
+  end if;
+  select * into strict result from public.rich_campaign_report() where ad_code = 'envelope-v2-london';
+  if (result.home_views,result.gift_offer_views,result.gift_form_views,result.personalization_starts,
+      result.checkout_clicks,result.checkout_starts,result.paid_gifts) <> (0,1,1,1,1,0,0) then
+    raise exception 'Wrong real-purchase funnel counts: %', row_to_json(result);
   end if;
   select * into strict result from public.rich_campaign_report() where ad_code = 'vault-v1-miami';
   if (result.home_views, result.checkout_starts, result.paid_gifts) <> (10002, 102, 1) then

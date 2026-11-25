@@ -56,7 +56,7 @@ test("records the two new city codes and drops the two retired codes", async () 
   assert.deepEqual(rows.map(row => row.campaign_ad), ["vault-v1-new-york", "vault-v1-los-angeles", undefined, undefined]);
 });
 
-test("tags only homepage visits and drops arbitrary fields and ad strings", async () => {
+test("tags anonymous visits and buyer actions but drops arbitrary fields and ad strings", async () => {
   const { rows, post } = await analyticsFixture();
   const visit = { event: "page_view", page: "home" };
   assert.equal((await post({ ...visit, campaign_ad: ad, email: "private@example.invalid",
@@ -67,7 +67,14 @@ test("tags only homepage visits and drops arbitrary fields and ad strings", asyn
     assert.deepEqual(rows.at(-1), baseVisit);
   }
   assert.equal((await post({ event: "page_view", page: "gift", campaign_ad: ad })).status, 204);
-  assert.deepEqual(rows.at(-1), { ...baseVisit, page: "gift" });
+  assert.deepEqual(rows.at(-1), { ...baseVisit, page: "gift", campaign_ad: ad });
+  for (const code of ["envelope-v2-london","button-v2-london"]) {
+    for (const [event,page] of [["page_view","rich-gift"],["gift_personalize_start","gift"],["gift_checkout_click","gift"]]) {
+      assert.equal((await post({event,page,campaign_ad:code,email:"private@example.invalid"})).status,204);
+      assert.deepEqual(rows.at(-1),{event_type:event,page,gift_kind:null,gift_id:null,campaign_ad:code});
+    }
+    assert.equal((await post({event:"gift_personalize_start",page:"open-gift",campaign_ad:code})).status,400);
+  }
   const id = "00000000-0000-4000-8000-000000000001";
   assert.equal((await post({ event: "gift_open", page: "open-gift", kind: "paid", id, campaign_ad: ad })).status, 204);
   assert.deepEqual(rows.at(-1), { event_type: "gift_open", page: "open-gift", gift_kind: "paid", gift_id: id });
