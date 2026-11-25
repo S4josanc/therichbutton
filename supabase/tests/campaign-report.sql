@@ -46,7 +46,9 @@ grant select on public.rich_analytics_events, public.rich_gift_orders to service
 \ir ../sql/black-friday-2026.sql
 \ir ../sql/black-friday-2026.sql
 
-\ir ../migrations/20261125155000_gift_campaign_funnel.sql
+\ir ../migrations/20261125163934_register_london_gift_creatives.sql
+\ir ../migrations/20261125163941_allow_gift_buyer_event_types.sql
+\ir ../migrations/20261125163950_gift_campaign_funnel_report.sql
 
 begin;
 set local timezone to 'America/Los_Angeles';
