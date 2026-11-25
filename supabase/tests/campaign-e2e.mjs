@@ -74,7 +74,7 @@ function render(url, { failedCheckout = false, offerActive = false, staleGiftQuo
     if (src) {
       const asset = new URL(src, location);
       assert.equal(asset.origin, origin);
-      assert.ok(['/campaign.js','/shop-offer.js'].includes(asset.pathname));
+      assert.ok(['/campaign.js','/shop-offer.js','/gift-ad-measure.js'].includes(asset.pathname));
       source = fs.readFileSync(new URL(asset.pathname.slice(1), siteRoot), 'utf8');
     }
     vm.runInContext(source, context, { filename: src || name });
