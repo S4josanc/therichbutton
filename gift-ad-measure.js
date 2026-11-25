@@ -90,9 +90,10 @@
   const pendingPurchases = new Set();
   let checkoutSent = false;
   let productSent = false;
+  let pageActive = true;
   let banner, settings, choiceMessage;
   const currentTierIsGift = () => !isForm || (document.getElementById('tier')?.value ?? 'rich-gift') === 'rich-gift';
-  const allowed = () => readChoice() === 'allow' && (isReceipt || currentTierIsGift());
+  const allowed = () => pageActive && readChoice() === 'allow' && (isReceipt || currentTierIsGift());
 
   let bridge, ready = false, sequence = 0;
   const pending = new Map();
@@ -140,6 +141,7 @@
     if (e.data.ready === true && !ready) {
       ready = true;
       for (const entry of pending.values()) entry.dispatch();
+      view();
     } else if (typeof e.data.ok === 'boolean') pending.get(e.data.seq)?.finish(e.data.ok);
   });
   function send(payload, timeout) {
@@ -200,9 +202,10 @@
 
   window.richGiftAds = Object.freeze({purchase, canMeasurePurchase, checkoutStarted});
   function view() {
-    if (!isProduct || !ordinaryGift || !allowed() || productSent) return;
+    if (!isProduct || !ordinaryGift || !ready || !allowed() || productSent) return;
+    // A product view can wait for the SDK for as long as this page is active.
     productSent = true;
-    send({name:'ViewContent'}, 3500);
+    bridge.contentWindow.postMessage({type:messageType, seq:++sequence, name:'ViewContent'}, origin);
   }
 
   function refresh() {
@@ -214,7 +217,7 @@
     banner.hidden = !eligible || !!choice;
     if (choiceMessage) choiceMessage.textContent = choice === 'allow' ? 'Ad measurement is on.' :
       choice === 'decline' ? 'Ad measurement is off.' : '';
-    if (eligible && ordinaryGift && allowed()) { prepare(); view(); }
+    if (eligible && ordinaryGift && allowed() && (!isProduct || !productSent)) prepare();
   }
 
   function remember(choice) {
@@ -271,7 +274,8 @@
   window.addEventListener('storage', e => {
     if (e.key === null || e.key === consentKey) { if (!allowed()) { clearClick(); cancelFrames(); } refresh(); }
   });
-  window.addEventListener('pageshow', () => { if (!allowed()) { clearClick(); cancelFrames(); } refresh(); });
+  if (isProduct) window.addEventListener('pagehide', () => { pageActive = false; cancelFrames(); });
+  window.addEventListener('pageshow', () => { pageActive = true; if (!allowed()) { clearClick(); cancelFrames(); } refresh(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true});
   else mount();
 })();

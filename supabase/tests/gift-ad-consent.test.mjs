@@ -91,6 +91,36 @@ test('no network on undecided or refused, grant emits only ViewContent and revok
   const repeat=makePage('/rich-gift.html',{store:p.store});assert.equal(repeat.frames.length,0);
 });
 
+test('a slow SDK counts one consenting product view, never after withdrawal or leaving the page', t => {
+  t.mock.timers.enable({apis:['setTimeout']});
+  const page = makePage('/rich-gift.html', {choice:'allow'});
+  const revoked = makePage('/rich-gift.html', {choice:'allow'});
+  const left = makePage('/rich-gift.html', {choice:'allow'});
+  const ready = (p, frame) => p.emit('message', {
+    origin, source:frame.contentWindow, data:{type:'rich-gift-ad-v1',ready:true}
+  });
+  const views = p => p.posted.filter(m => m.data.name === 'ViewContent').length;
+  for (const p of [page, revoked, left]) p.frames[0].onload();
+  revoked.choose('decline');
+  left.emit('pagehide', {persisted:true});
+  t.mock.timers.tick(60000);
+  for (const p of [page, revoked, left]) ready(p, p.frames[0]);
+  assert.deepEqual([views(page), views(revoked), views(left)], [1,0,0]);
+
+  left.emit('pageshow', {persisted:true});
+  ready(left, left.frames[0]); // The removed iframe's messages are always stale.
+  assert.equal(views(left), 0);
+  left.frames[1].onload();
+  ready(left, left.frames[1]);
+  ready(left, left.frames[1]);
+  assert.equal(views(left), 1);
+
+  page.emit('pagehide', {persisted:true});
+  page.emit('pageshow', {persisted:true});
+  assert.equal(page.frames.length, 1);
+  assert.equal(views(page), 1);
+});
+
 test('no checkout before consent; eligible session creation is awaited and the signal stops at timeout',async()=>{
   const p=makePage('/gift.html?tier=rich-gift');
   assert.equal(await p.w.richGiftAds.checkoutStarted(),false);
