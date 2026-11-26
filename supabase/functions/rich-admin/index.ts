@@ -1,5 +1,7 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { readMetaReport } from "./meta-report.ts";
+import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
+import { recoverPaidGift } from "./gift-recovery.mjs";
 const origin="https://therichbutton.com";
 const headers={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json","Cache-Control":"no-store"};
 const reply=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers});
@@ -13,6 +15,31 @@ Deno.serve(async(req:Request)=>{
  const {data:{user},error}=await db.auth.getUser(jwt);
  if(error||!user||!user.email_confirmed_at||user.email?.toLowerCase()!=="info@akademiaene.com")return reply({error:"Access denied"},403);
  let payload;try{payload=await req.json()}catch{return reply({error:"Invalid request"},400)}
+ if (payload?.action === "recover_paid_gift") {
+   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+   if (!stripeKey || !/^(?:sk|rk)_live_/.test(stripeKey)) return reply({error:"Recovery is temporarily unavailable."}, 503);
+   const stripe = new Stripe(stripeKey, {apiVersion:"2024-12-18.acacia"});
+   const result = await recoverPaidGift(payload, {
+     async loadOrder(id: string) {
+       const {data, error} = await db.from("rich_gift_orders")
+         .select("id,status,paid_at,currency,amount_cents,buyer_email,stripe_checkout_session_id,stripe_payment_intent_id,access_token,gift_token")
+         .eq("id", id).maybeSingle();
+       if (error) throw new Error("Order lookup failed");
+       return data;
+     },
+     loadSession(id: string) {
+       return stripe.checkout.sessions.retrieve(id, {expand:["payment_intent.latest_charge.refunds"]});
+     },
+     async recordAudit(orderId: string) {
+       const {error} = await db.from("rich_admin_audit").insert({
+         actor_email: user.email, action: "paid_gift_recovery",
+         new_value: {order_id: orderId}, reason: "Verified checkout mailbox and live payment",
+       });
+       if (error) throw new Error("Recovery audit failed");
+     },
+   });
+   return reply(result.body, result.status);
+ }
  if(payload.action==="wall_list"){const {data,error}=await db.from("rich_wall_entries").select("id,display_name,edition,country_code,created_at,display_order").order("display_order",{ascending:true,nullsFirst:false}).order("created_at",{ascending:true}).order("id",{ascending:true});if(error)return reply({error:"Could not load wall"},500);return reply({entries:data})}
  if(payload.action==="wall_reorder"){
  const validIds=(ids:unknown)=>Array.isArray(ids)&&ids.length<=1000&&ids.every(id=>typeof id==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))&&new Set(ids.map(id=>id.toLowerCase())).size===ids.length;
@@ -48,8 +75,47 @@ Deno.serve(async(req:Request)=>{
    .in("event_type", ["page_view", "gift_open", "gift_reveal", "gift_cta_click"])
    .gte("created_at",new Date(Date.now()-30*86400000).toISOString()).order("created_at",{ascending:false}).limit(10000)]);
  if(orders.error||throne.error||audit.error||complimentary.error||analytics.error)return reply({error:"Unable to load dashboard"},500);
- const paid=orders.data.filter(o=>o.status==="paid");const referralPaid={};for(const o of paid){if(o.referral_token){const k=o.referral_kind+":"+o.referral_token;referralPaid[k]=(referralPaid[k]||0)+1}}
- const events=analytics.data||[];const count=(type,page)=>events.filter(e=>e.event_type===type&&(!page||e.page===page)).length;const byGift={};for(const e of events){if(!e.gift_id)continue;const k=e.gift_kind+":"+e.gift_id;if(!byGift[k])byGift[k]={opens:0,reveals:0,cta_clicks:0};if(e.event_type==="gift_open")byGift[k].opens++;if(e.event_type==="gift_reveal")byGift[k].reveals++;if(e.event_type==="gift_cta_click")byGift[k].cta_clicks++}const daily={};for(const e of events){if(e.event_type!=="page_view")continue;const d=e.created_at.slice(0,10);daily[d]=(daily[d]||0)+1}return reply({analytics:{page_views:count("page_view"),home_views:count("page_view","home"),gift_opens:count("gift_open"),reveals:count("gift_reveal"),cta_clicks:count("gift_cta_click"),by_gift:byGift,referral_paid:referralPaid,daily:Object.entries(daily).sort((a,b)=>a[0].localeCompare(b[0]))},orders:orders.data,throne:throne.data,audit:audit.data,complimentary:complimentary.data,summary:{orders:orders.data.length,complimentary:complimentary.data.filter(g=>!g.revoked_at).length,paid:paid.length,revenue_cents:paid.reduce((s,o)=>s+o.amount_cents,0)},notice:"Orders limited to 100. Analytics covers up to 10,000 events from the last 30 days; these are events, not unique people. Stripe reconciliation is not connected."});
+ const paid = orders.data.filter(order => order.status === "paid");
+ const promoTokens = new Set(complimentary.data.map(gift => gift.token));
+ const referralPaid: Record<string, number> = {};
+ for (const order of paid) {
+   if (order.referral_kind !== "complimentary" || !promoTokens.has(order.referral_token)) continue;
+   const key = "complimentary:" + order.referral_token;
+   referralPaid[key] = (referralPaid[key] || 0) + 1;
+ }
+ // Referrals can hold a paid recipient's private token. Only return per-gift
+ // breakdowns for promotional gifts the administrator already manages here.
+ const visibleOrders = orders.data.map(({referral_token, ...order}) => order);
+ const events = analytics.data || [];
+ const count = (type: string, page?: string) => events.filter(e => e.event_type === type && (!page || e.page === page)).length;
+ const byGift: Record<string, {opens: number, reveals: number, cta_clicks: number}> = {};
+ const daily: Record<string, number> = {};
+ for (const event of events) {
+   if (event.event_type === "page_view") {
+     const day = event.created_at.slice(0, 10);
+     daily[day] = (daily[day] || 0) + 1;
+   }
+   if (event.gift_kind !== "complimentary" || !promoTokens.has(event.gift_id)) continue;
+   const key = "complimentary:" + event.gift_id;
+   const stats = byGift[key] ??= {opens: 0, reveals: 0, cta_clicks: 0};
+   if (event.event_type === "gift_open") stats.opens++;
+   if (event.event_type === "gift_reveal") stats.reveals++;
+   if (event.event_type === "gift_cta_click") stats.cta_clicks++;
+ }
+ return reply({
+   analytics: {
+     page_views: count("page_view"), home_views: count("page_view", "home"),
+     gift_opens: count("gift_open"), reveals: count("gift_reveal"), cta_clicks: count("gift_cta_click"),
+     by_gift: byGift, referral_paid: referralPaid,
+     daily: Object.entries(daily).sort(([a], [b]) => a.localeCompare(b)),
+   },
+   orders: visibleOrders, throne: throne.data, audit: audit.data, complimentary: complimentary.data,
+   summary: {
+     orders: orders.data.length, complimentary: complimentary.data.filter(g => !g.revoked_at).length,
+     paid: paid.length, revenue_cents: paid.reduce((sum, order) => sum + order.amount_cents, 0),
+   },
+   notice: "Orders limited to 100. Analytics covers up to 10,000 events from the last 30 days; these are events, not unique people. Dashboard totals use stored order status.",
+ });
  }
  if(payload.action==="issue_complimentary"){
  const edition=String(payload.edition||"");
