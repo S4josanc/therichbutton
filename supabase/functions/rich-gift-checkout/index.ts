@@ -3,7 +3,7 @@ import {createClient} from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { approvedAd, approvedOrganicPost, rejectedCampaignAd } from "../_shared/campaign-ad.mjs";
 import { writeOrganicOrder } from "../_shared/organic-order.mjs";
 import { quotePrice } from "../_shared/black-friday.mjs";
-const headers={"Access-Control-Allow-Origin":"https://therichbutton.com","Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
+const headers={"Access-Control-Allow-Origin":"https://therichbutton.com","Access-Control-Allow-Headers":"content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json","Cache-Control":"no-store"};
 const respond=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers});
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{headers});
@@ -66,6 +66,9 @@ Deno.serve(async(req:Request)=>{
     (fields:Record<string, string>) => linkSession(ad, fields));
   if(ad && rejectedCampaignAd(updated.error,"rich_gift_orders"))updated=await linkSession(null);
   if(updated.error){await stripe.checkout.sessions.expire(session.id).catch(()=>{});return respond({error:"Unable to prepare checkout"},500)}
-  return respond({checkout_url:session.url});
+  return respond({
+    checkout_url: session.url,
+    ...(data.prepare_recovery === true ? { recovery_token: order.access_token } : {}),
+  });
  }catch(e){console.error("checkout creation failed",String(e));return respond({error:"Checkout temporarily unavailable"},503)}
 });
