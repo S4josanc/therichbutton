@@ -52,6 +52,23 @@ test('all 105 editorial links and three shared profiles resolve to the same allo
   assert.deepEqual(pageNames, new Set(Object.keys(pages)));
 });
 
+test('social bios are attributed only to their network and current campaign across the Gift journey', () => {
+  for (const source of ['instagram', 'tiktok', 'youtube']) {
+    for (const campaign of ['evergreen', 'black_friday_2026', 'christmas_2026']) {
+      const id = [source, campaign, 'profile'].join('_');
+      const query = new URLSearchParams({utm_source: source, utm_medium: 'organic_social',
+        utm_campaign: campaign, utm_content: 'profile'});
+      const landing = visit('/rich-gift.html?' + query, ['gift.html?tier=rich-gift']);
+      assert.equal(approvedOrganicPost(id), id);
+      assert.deepEqual(landing.events.filter(e => e.event === 'organic_landing'),
+        [{event: 'organic_landing', page: 'rich-gift', organic_post_id: id}]);
+      const form = visit(landing.urls[0]);
+      assert.equal(form.campaign.organicPostId, id);
+      assert.equal(form.events.some(e => e.event === 'organic_landing'), false);
+    }
+  }
+});
+
 test('public navigation carries one label, counts only tagged entrances, and never appends private values', () => {
   const stripe = 'https://buy.stripe.com/9B67sMabl99RcJV4IR9AA0n';
   const normal = ['./', 'gift.html?tier=gold', 'rich-gift.html', 'rich-gift-button.html'];
@@ -88,7 +105,8 @@ test('duplicate, mixed, unknown and private attribution stays out of the organic
     assert.deepEqual(v.events, [], bad);
   }
   for (const invalid of ['', null, {}, 'pinterest_christmas_2026_profile','facebook_christmas_2026_profile',
-    'youtube_black_friday_2026_profile', 'instagram_christmas_2026_day-00','tiktok_christmas_2026_day-21',
+    'pinterest_black_friday_2026_profile','facebook_evergreen_profile','tiktok_evergreen_black-friday',
+    'instagram_evergreen_day-01', 'instagram_christmas_2026_day-00','tiktok_christmas_2026_day-21',
     'youtube_black_friday_2026_day-01','meta_christmas_2026_day-01',post + '-extra']) {
     assert.equal(approvedOrganicPost(invalid), null);
     assert.equal(visit('/?trb_post=' + encodeURIComponent(invalid)).campaign.organicPostId, undefined);

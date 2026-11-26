@@ -12,6 +12,7 @@ const basePost = {
   landing_views: 2, checkout_clicks: '1', verified_sales: 0,
 };
 const profile = { ...basePost, content: 'profile', landing_views: 7, verified_sales: '1' };
+const evergreen = { ...profile, campaign: 'evergreen' };
 const friday = { ...basePost, source: 'youtube', campaign: 'black_friday_2026', content: 'black-friday' };
 
 function element() {
@@ -34,7 +35,7 @@ function panel(call) {
 test('campaign and channel filters update post details, profile rows and channel totals together', async () => {
   const dashboard = panel(async (action, options) => {
     assert.equal(action, 'organic_report');
-    assert.deepEqual(options, { before_deadline: false });
+    assert.deepEqual(options, { before_deadline: false, include_evergreen_profiles: true });
     return { posts: [basePost, profile, friday] };
   });
   await dashboard.load();
@@ -48,6 +49,16 @@ test('campaign and channel filters update post details, profile rows and channel
   dashboard.get('Source').listeners.change();
   assert.equal(dashboard.get('Results').hidden, true);
   assert.deepEqual(dashboard.readTable('Totals'), []);
+});
+
+test('evergreen bios stay filterable and never name an individual post', async () => {
+  const dashboard = panel(async () => ({ posts: [friday, evergreen] }));
+  await dashboard.load();
+  dashboard.get('Campaign').value = 'evergreen';
+  dashboard.get('Campaign').listeners.change();
+  assert.deepEqual(dashboard.readTable('Posts'),
+    [['Fuera de campaña', 'Instagram', 'Perfil compartido · publicación desconocida', '7', '1', '1']]);
+  assert.match(html, /<option value="evergreen">Fuera de campaña<\/option>/);
 });
 
 test('missing data is unavailable, recorded zero is displayed and delayed responses cannot leak through logout', async () => {
@@ -96,16 +107,16 @@ test('report requires the existing confirmed admin and returns an error if the a
       beforeDeadline = options.p_before_deadline;
       rpcCalls++;
       assert.equal(name, 'rich_organic_report');
-      return failRpc ? { error: { message: 'internal' } } : { data: [basePost] };
+      return failRpc ? { error: { message: 'internal' } } : { data: [basePost, evergreen] };
     },
   };
   runInNewContext(stripTypeScriptTypes(server.replace(/^import[^\n]*;\r?$/gm, '')), {
     Deno: { serve: fn => { handle = fn; }, env: { get: () => 'fixture' } },
     createClient: () => db, Response,
   });
-  const request = (token = '', before_deadline = false) => handle(new Request('https://fixture.invalid', {
+  const request = (token = '', before_deadline = false, include_evergreen_profiles) => handle(new Request('https://fixture.invalid', {
     method: 'POST', headers: { origin: 'https://therichbutton.com', authorization: token },
-    body: JSON.stringify({ action: 'organic_report', before_deadline }),
+    body: JSON.stringify({ action: 'organic_report', before_deadline, include_evergreen_profiles }),
   }));
   assert.equal((await request()).status, 401);
   assert.equal((await request('Bearer fixture')).status, 403);
@@ -118,13 +129,14 @@ test('report requires the existing confirmed admin and returns an error if the a
   user.email_confirmed_at = 'confirmed';
   assert.deepEqual(await (await request('Bearer fixture')).json(), { posts: [basePost] });
   assert.equal(beforeDeadline, false);
-  await request('Bearer fixture', true);
+  assert.deepEqual(await (await request('Bearer fixture', false, 'true')).json(), { posts: [basePost] });
+  assert.deepEqual(await (await request('Bearer fixture', true, true)).json(), { posts: [basePost, evergreen] });
   assert.equal(beforeDeadline, true);
   failRpc = true;
   const failure = await request('Bearer fixture');
   assert.equal(failure.status, 503);
   assert.ok(!(await failure.text()).includes('internal'));
-  assert.equal(rpcCalls, 3);
+  assert.equal(rpcCalls, 4);
 });
 
 test('the general dashboard limits only the event types its counters actually consume', () => {

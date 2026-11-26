@@ -1,0 +1,57 @@
+:root{color-scheme:light;--green:#193c32;--red:#85392f;--gold:#8b693e;--paper:#fff;--serif:Georgia,'Times New Roman',serif;--sans:system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:#f3f1ea;color:var(--green);font:16px/1.5 var(--sans)}
+.toolbar,.status,.fold-guide{max-width:920px;margin:0 auto;padding:24px 18px}
+.toolbar{display:flex;gap:20px;align-items:center;justify-content:space-between}
+.brand,.eyebrow{font:650 .68rem/1.4 var(--sans);text-transform:uppercase;letter-spacing:.16em}
+.brand{color:var(--gold)}
+h1{font:normal clamp(24px,3vw,33px)/1.15 var(--serif);margin:.2em 0 0}
+button{background:var(--green);color:white;border:0;border-radius:5px;padding:13px 19px;font:650 .9rem var(--sans);cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.fold-guide,.status{padding-top:0;font-size:14px}
+.fold-guide strong{color:var(--red)}
+.sheet{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:'front qr' 'note back';gap:12px;max-width:920px;margin:0 auto 50px;padding:0 18px}
+.panel{container-type:inline-size;aspect-ratio:105/148.5;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;position:relative;padding:8%;color:var(--green);min-width:0;overflow:hidden}
+.panel p,.panel h2{margin:0}
+.front{grid-area:front}
+.front::before{position:absolute;content:'';inset:5.7%;border:1px solid #a58458;pointer-events:none}
+.front .ornament{display:block;width:47%;height:auto;color:var(--red)}
+.panel .eyebrow{font-size:clamp(9px,3.1cqw,15px);color:var(--gold);line-height:1.6}
+.front .eyebrow{margin-top:1%}
+.front h2{max-width:9.5em;margin-top:6%;font:normal 11cqw/1.03 var(--serif);letter-spacing:-.05em;text-wrap:balance}
+.front h2 em{display:block;font-weight:400;color:var(--red)}
+.rule{display:block;width:11%;height:1px;background:var(--gold);margin-top:8%}
+.inside-left{grid-area:note}
+.inside-right{grid-area:qr}
+.star{font:normal 14cqw/1 var(--serif);color:var(--gold);margin-bottom:8%}
+#cardDedication{font:italic 7.2cqw/1.27 var(--serif);overflow-wrap:anywhere}
+#cardSender{margin-top:7%;font:normal 5cqw/1.3 var(--serif);color:var(--red);overflow-wrap:anywhere}
+#cardRecipient{font:normal 12cqw/1.06 var(--serif);overflow-wrap:anywhere;letter-spacing:-.035em;margin-top:4%}
+.qr{display:block;width:51%;height:auto;aspect-ratio:1;flex:none;margin-top:7%}
+.scan{font:normal 4.1cqw/1.4 var(--sans);margin-top:3%!important}
+.back{grid-area:back}
+.imprint{margin-top:auto;margin-bottom:13%}
+.monogram{display:inline-grid;place-content:center;color:var(--red);font:italic 8.5cqw/1 var(--serif);border:1px solid var(--gold);width:1.8em;height:1.8em;border-radius:100%;margin-bottom:.65em}
+@media(max-width:600px){
+  .sheet{grid-template-columns:1fr;grid-template-areas:'front' 'note' 'qr' 'back';max-width:420px}
+  .toolbar{align-items:flex-end}.toolbar button{flex:none;padding:12px}
+}
+@page{size:A4 portrait;margin:0}
+@media print{
+  html,body{margin:0;padding:0;background:white;width:210mm}
+  .toolbar,.status,.fold-guide{display:none!important}
+  .sheet{width:210mm;height:296.8mm;max-width:none;grid-template-areas:'qr note' 'back front';grid-template-columns:105mm 105mm;grid-template-rows:148.4mm 148.4mm;gap:0;margin:0;padding:0;break-inside:avoid}
+  .panel{width:105mm;height:148.4mm;aspect-ratio:auto;padding:10mm 9mm;background:white;break-inside:avoid}
+  .inside-left,.inside-right{transform:rotate(180deg)}
+  .front::before{border-width:.25mm;inset:7mm}
+  .panel .eyebrow{font-size:7.7pt}
+  .front .ornament{width:38mm}
+  .front h2{font-size:30pt}
+  .rule{border-top:.3mm solid var(--gold);height:0}
+  #cardRecipient{font-size:24pt}
+  #cardDedication{font-size:16pt}
+  #cardSender{font-size:12pt}
+  .scan{font-size:10pt}
+  .qr{width:41mm;height:41mm}
+}

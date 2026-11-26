@@ -14,6 +14,7 @@ ALTER TABLE public.rich_edition_orders ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON public.rich_edition_orders TO service_role;
 
 \ir ../migrations/20261125173212_organic_attribution.sql
+\ir ../migrations/20261126201932_social_profile_links.sql
 
 BEGIN;
 INSERT INTO public.rich_analytics_events (event_type,page,organic_post_id,created_at) VALUES
@@ -22,6 +23,8 @@ INSERT INTO public.rich_analytics_events (event_type,page,organic_post_id,create
   ('organic_landing','rich-gift','pinterest_christmas_2026_day-01',now()),
   ('organic_landing','home','instagram_christmas_2026_profile',now()),
   ('organic_landing','home','instagram_christmas_2026_profile',now()),
+  ('organic_landing','rich-gift','instagram_evergreen_profile',now()),
+  ('organic_checkout_click','gift','instagram_black_friday_2026_profile',now()),
   ('organic_checkout_click','diamond','youtube_christmas_2026_day-02',now()),
   ('gift_open','open-gift',NULL,now()),
   ('page_view','home',NULL,now());
@@ -115,20 +118,28 @@ BEGIN
       WHERE stripe_checkout_session_id = 'cs_live_paid_ad') IS NULL THEN
     RAISE EXCEPTION 'Existing gift purchase event ID default changed';
   END IF;
-  IF (SELECT count(*) FROM public.rich_organic_report()) <> 108
-    OR (SELECT count(*) FROM public.rich_organic_report() WHERE campaign = 'black_friday_2026') <> 5
+  IF (SELECT count(*) FROM public.rich_organic_report()) <> 114
+    OR (SELECT count(*) FROM public.rich_organic_report() WHERE campaign = 'black_friday_2026' AND content <> 'profile') <> 5
     OR (SELECT count(*) FROM public.rich_organic_report() WHERE campaign = 'christmas_2026' AND content <> 'profile') <> 100
-    OR (SELECT array_agg(source ORDER BY source) FROM public.rich_organic_report() WHERE content = 'profile')
-      IS DISTINCT FROM ARRAY['instagram','tiktok','youtube'] THEN
+    OR (SELECT count(*) FROM public.rich_organic_report() WHERE source IN ('instagram','tiktok','youtube')
+          AND campaign IN ('evergreen','christmas_2026','black_friday_2026') AND content = 'profile') <> 9 THEN
     RAISE EXCEPTION 'The editorial calendar or profile coverage changed';
   END IF;
   SELECT * INTO STRICT r FROM public.rich_organic_report() WHERE source = 'pinterest' AND campaign = 'black_friday_2026';
   IF (r.landing_views,r.checkout_clicks,r.verified_sales) IS DISTINCT FROM (1::bigint,1::bigint,2::bigint) THEN
     RAISE EXCEPTION 'Incorrect historical and verified counts: %',r;
   END IF;
-  SELECT * INTO STRICT r FROM public.rich_organic_report() WHERE source = 'instagram' AND content = 'profile';
+  SELECT * INTO STRICT r FROM public.rich_organic_report() WHERE source = 'instagram' AND campaign = 'christmas_2026' AND content = 'profile';
   IF (r.landing_views,r.checkout_clicks,r.verified_sales) IS DISTINCT FROM (2::bigint,0::bigint,1::bigint) THEN
     RAISE EXCEPTION 'Shared profile attribution changed: %',r;
+  END IF;
+  SELECT * INTO STRICT r FROM public.rich_organic_report() WHERE source = 'instagram' AND campaign = 'evergreen';
+  IF (r.content,r.landing_views,r.checkout_clicks) IS DISTINCT FROM ('profile'::text,1::bigint,0::bigint) THEN
+    RAISE EXCEPTION 'Evergreen traffic must remain separate from campaigns';
+  END IF;
+  SELECT * INTO STRICT r FROM public.rich_organic_report() WHERE source = 'instagram' AND campaign = 'black_friday_2026' AND content = 'profile';
+  IF (r.landing_views,r.checkout_clicks,r.verified_sales) IS DISTINCT FROM (0::bigint,1::bigint,0::bigint) THEN
+    RAISE EXCEPTION 'A Black Friday bio click must not credit the Black Friday post';
   END IF;
   SELECT * INTO STRICT r FROM public.rich_organic_report() WHERE source = 'youtube' AND content = 'day-02';
   IF (r.landing_views,r.checkout_clicks,r.verified_sales) IS DISTINCT FROM (0::bigint,1::bigint,0::bigint) THEN
@@ -148,7 +159,7 @@ RESET ROLE;
 UPDATE public.rich_edition_orders SET status = 'refunded' WHERE stripe_session_id = 'cs_live_bio';
 DO $checks$
 BEGIN
-  IF (SELECT verified_sales FROM public.rich_organic_report() WHERE content = 'profile' AND source = 'instagram') <> 0 THEN
+  IF (SELECT verified_sales FROM public.rich_organic_report() WHERE content = 'profile' AND source = 'instagram' AND campaign = 'christmas_2026') <> 0 THEN
     RAISE EXCEPTION 'A subsequently refunded order remained credited';
   END IF;
 END;

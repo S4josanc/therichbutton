@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>The Rich Gift · Christmas card</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="christmas-card.css">
+  <script type="module" src="christmas-card.mjs"></script>
+</head>
+<body>
+  <header class="toolbar">
+    <div><span class="brand">THE RICH BUTTON</span><h1>Your Christmas card</h1></div>
+    <button type="button" id="printChristmasCard" disabled>Print / Save PDF</button>
+  </header>
+  <p id="cardStatus" class="status" role="status">Open this card from your gift confirmation.</p>
+  <aside id="foldGuide" class="fold-guide" hidden><strong>One sheet, two folds.</strong> Print single-sided on A4 at 100%. Place the sheet printed side down. Fold the top edge to the bottom edge, blank sides together. Fold once more so “You said you wanted nothing.” is on the front and the QR code is inside.</aside>
+  <main class="sheet" id="cardSheet" aria-label="Christmas card" hidden>
+    <section class="panel front" aria-label="Front">
+      <svg class="ornament" viewBox="0 0 160 142" fill="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M79 1v16m-1 5c-16-22-29-9-17-2 5 3 13 3 17 2Zm3 0c14-22 31-9 17-2-5 3-12 3-17 2Zm-1 0c-3 9-9 15-16 19m17-18c4 9 10 13 17 16" stroke-width="2"/>
+          <path d="M72 35v-7h16v7M75 28v-3h9v3" stroke-width="1.6"/>
+          <circle cx="80" cy="75" r="39.5" stroke-width="2"/>
+          <path d="M76 36c-27 20-27 58 0 78m8-78c27 20 27 58 0 78M80 36v78" stroke-width="1.3"/>
+          <path d="M41 68c24 11 55 11 78 0m-78 9c25 11 53 11 78 0" stroke-width="1.6"/>
+        </g>
+        <g fill="#976e37">
+          <path d="m28 42 2 6 6 2-6 2-2 6-2-6-6-2 6-2Zm98 54 2 6 6 2-6 2-2 6-2-6-6-2 6-2Zm1-67 1.2 3.8L132 34l-3.8 1.2L127 39l-1.2-3.8L122 34l3.8-1.2Z"/>
+          <circle cx="43" cy="32" r="1.5"/><circle cx="134" cy="85" r="1.4"/><circle cx="31" cy="96" r="1.4"/>
+        </g>
+      </svg>
+      <p class="eyebrow">Merry Christmas</p>
+      <h2>You said you wanted <em>nothing.</em></h2>
+      <span class="rule" aria-hidden="true"></span>
+    </section>
+    <section class="panel inside-left" aria-label="Personal message">
+      <span class="star" aria-hidden="true">✧</span>
+      <p id="cardDedication" dir="auto"></p>
+      <p id="cardSender" dir="auto"></p>
+    </section>
+    <section class="panel inside-right" aria-label="Gift and QR code">
+      <p class="eyebrow">A little something for</p>
+      <h2 id="cardRecipient" dir="auto"></h2>
+      <svg id="giftCode" class="qr" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="QR code to open your private gift"></svg>
+      <p class="scan">Scan to open your gift.</p>
+    </section>
+    <section class="panel back" aria-label="Back">
+      <div class="imprint"><span class="monogram" aria-hidden="true">R.</span><p class="eyebrow">The Rich Button</p></div>
+    </section>
+  </main>
+</body>
+</html>

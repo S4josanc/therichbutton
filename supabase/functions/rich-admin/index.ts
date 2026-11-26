@@ -62,8 +62,11 @@ Deno.serve(async(req:Request)=>{
  }
  if (payload.action === "organic_report") {
    const { data, error } = await db.rpc("rich_organic_report", { p_before_deadline: payload.before_deadline === true });
-   if (error) return reply({ error: "Organic report unavailable" }, 503);
-   return reply({ posts: data });
+   if (error || !Array.isArray(data)) return reply({ error: "Organic report unavailable" }, 503);
+   // Older dashboard modules only recognize the two editorial campaign names.
+   const posts = payload.include_evergreen_profiles === true
+     ? data : data.filter((post: {campaign: string}) => post.campaign !== "evergreen");
+   return reply({ posts });
  }
  if (payload.action === "campaign_report") {
    const { data, error } = await db.rpc("rich_campaign_report");
