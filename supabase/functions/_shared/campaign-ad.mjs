@@ -9,17 +9,16 @@ export function approvedAd(value) {
   return typeof value === "string" && adCodes.has(value) ? value : null;
 }
 
-// A short public key from the November editorial calendar. Three shared Christmas
-// profile links identify only their channel, never an individual publication.
+// Editorial links identify a post. A social bio identifies only its channel.
 export function approvedOrganicPost(value) {
   if (typeof value !== "string" || value.length > 64) return null;
-  const match = /^(pinterest|facebook|instagram|tiktok|youtube)_(black_friday_2026|christmas_2026)_(black-friday|day-(?:0[1-9]|1[0-9]|20)|profile)$/.exec(value);
+  const match = /^(pinterest|facebook|instagram|tiktok|youtube)_(black_friday_2026|christmas_2026|evergreen)_(black-friday|day-(?:0[1-9]|1[0-9]|20)|profile)$/.exec(value);
   if (!match) return null;
   const [, source, campaign, content] = match;
-  if (campaign === "black_friday_2026") return content === "black-friday" ? value : null;
-  if (content === "black-friday") return null;
-  if (content === "profile" && !["instagram", "tiktok", "youtube"].includes(source)) return null;
-  return value;
+  if (content === "profile") return ["instagram", "tiktok", "youtube"].includes(source) ? value : null;
+  if (campaign === "black_friday_2026" && content === "black-friday") return value;
+  if (campaign === "christmas_2026" && content.startsWith("day-")) return value;
+  return null;
 }
 
 // Retry only if PostgreSQL or its schema cache explicitly rejected the ad

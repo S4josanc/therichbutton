@@ -62,14 +62,17 @@
 
   function organicCode(source, campaign, content) {
     if (!organicSources.has(source)) return;
-    if (campaign === 'black_friday_2026' && content === 'black-friday' ||
-        campaign === 'christmas_2026' && (/^day-(0[1-9]|1[0-9]|20)$/.test(content) ||
-          content === 'profile' && profileSources.has(source))) return [source, campaign, content].join('_');
+    const profile = content === 'profile' && profileSources.has(source) &&
+      ['black_friday_2026', 'christmas_2026', 'evergreen'].includes(campaign);
+    if (profile || campaign === 'black_friday_2026' && content === 'black-friday' ||
+        campaign === 'christmas_2026' && /^day-(0[1-9]|1[0-9]|20)$/.test(content)) {
+      return [source, campaign, content].join('_');
+    }
   }
 
   function knownPost(id) {
     if (!id) return;
-    const match = /^(pinterest|facebook|instagram|tiktok|youtube)_(black_friday_2026|christmas_2026)_([a-z0-9-]+)$/.exec(id);
+    const match = /^(pinterest|facebook|instagram|tiktok|youtube)_(black_friday_2026|christmas_2026|evergreen)_([a-z0-9-]+)$/.exec(id);
     return match ? organicCode(match[1], match[2], match[3]) : undefined;
   }
 

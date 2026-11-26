@@ -353,3 +353,56 @@ test('ordinary edition Payment Links and Black Friday checkout keep the originat
     {event:'organic_checkout_click',page:'gift',organic_post_id:id}]);
   assert.deepEqual(gift.redirects, [mockStripe]);
 });
+
+test('the opened buyer preview returns to the existing checkout with the current price and draft', async () => {
+  for (const offerActive of [false, true]) {
+    const {document, checkouts, redirects} = render('/gift.html?tier=rich-gift', {offerActive});
+    await settle();
+    const get = id => document.getElementById(id);
+    const actions = get('previewPurchaseActions');
+    const expectedPrice = offerActive ? '€24.50' : '€49';
+    assert.equal(actions.hidden, true);
+    get('name').value = 'Alex';
+    get('sender').value = 'Sam';
+    get('message').value = 'A personal dedication';
+    get('envelope').scrollIntoView = () => {};
+    get('preview').click();
+    get('envelope').click();
+    assert.equal(actions.hidden, false);
+    assert.equal(get('previewGiftPrice').textContent, expectedPrice);
+    let focused, shown;
+    get('message').focus = () => { focused = 'message'; };
+    get('message').scrollIntoView = () => { shown = 'message'; };
+    get('buyRichGift').focus = () => { focused = 'buy'; };
+    get('richGiftCheckoutBox').scrollIntoView = () => { shown = 'checkout'; };
+    get('editPreviewMessage').click();
+    assert.equal(focused, 'message');
+    assert.equal(shown, 'message');
+    get('sendPreviewGift').click();
+    get('sendPreviewGift').click();
+    assert.equal(focused, 'buy');
+    assert.equal(shown, 'checkout');
+    assert.equal(checkouts.length, 0);
+    get('prepareRecovery').checked = true;
+    get('buyRichGift').click();
+    await settle();
+    assert.equal(checkouts.length, 1);
+    assert.deepEqual(checkouts[0].payload, {
+      sender:'Sam', recipient:'Alex', message:'A personal dedication', prepare_recovery:true,
+      expected_amount_cents:offerActive ? 2450 : 4900, wall_opt_in:false, wall_alias:null,
+    });
+    assert.equal(get('giftRecoveryDialog').open, true);
+    assert.deepEqual(redirects, []);
+    get('replay').click();
+    assert.equal(actions.hidden, true);
+  }
+});
+
+test('the buyer preview action stays hidden on editions, receiver links and payment returns', () => {
+  for (const suffix of ['?tier=gold', '?e=r&n=Alex', '?order=fixture', '?test_order=fixture', '?stripe_test=1']) {
+    const { document, checkouts } = render('/gift.html' + suffix);
+    document.getElementById('envelope').click();
+    assert.equal(document.getElementById('previewPurchaseActions').hidden, true, suffix);
+    assert.equal(checkouts.length, 0, suffix);
+  }
+});

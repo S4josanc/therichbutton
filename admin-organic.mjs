@@ -4,6 +4,7 @@ const networks = new Map([
 ]);
 const campaigns = new Map([
   ['black_friday_2026', 'Black Friday 2026'], ['christmas_2026', 'Navidad 2026'],
+  ['evergreen', 'Fuera de campaña'],
 ]);
 const metricKeys = ['landing_views', 'checkout_clicks', 'verified_sales'];
 const numberFormat = new Intl.NumberFormat('es-ES');
@@ -58,7 +59,7 @@ export function createOrganicReport(document, call) {
       (!campaignFilter.value || post.campaign === campaignFilter.value));
     for (const body of [channels, totals, posts]) body.replaceChildren();
     results.hidden = !filtered.length;
-    status.textContent = filtered.length ? '' : 'No hay enlaces del calendario que coincidan con estos filtros.';
+    status.textContent = filtered.length ? '' : 'No hay enlaces que coincidan con estos filtros.';
     if (!filtered.length) return;
 
     const emptyTotals = () => ({ landing_views: 0, checkout_clicks: 0, verified_sales: 0 });
@@ -88,7 +89,10 @@ export function createOrganicReport(document, call) {
     refresh.disabled = true;
     status.textContent = 'Consultando las publicaciones…';
     try {
-      const { posts: data } = await call('organic_report', { before_deadline: periodFilter.value === 'deadline' });
+      const { posts: data } = await call('organic_report', {
+        before_deadline: periodFilter.value === 'deadline',
+        include_evergreen_profiles: true,
+      });
       if (id !== requestId) return;
       if (!Array.isArray(data)) throw Error('Invalid report');
       report = data.map(post => {
