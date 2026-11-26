@@ -180,6 +180,17 @@ test("attaches an ad to exactly the existing live session and retains it on canc
   assert.deepEqual(options, { idempotencyKey: "rich-gift-order1" });
 });
 
+test("optional recovery returns only the purchaser token after linking a verified live checkout", async () => {
+  const f = await checkoutFixture();
+  const response = await f.post({ ...buyer, prepare_recovery: true });
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await response.json(), { checkout_url: checkoutUrl, recovery_token: "private" });
+  const failed = await checkoutFixture({ linkErrors: [{code: "XX000", message: "unavailable"}] });
+  const unavailable = await failed.post({ ...buyer, prepare_recovery: true });
+  assert.equal(unavailable.status, 500);
+  assert.equal(Object.hasOwn(await unavailable.json(), "recovery_token"), false);
+});
+
 test("untagged, unknown and recipient referral purchases preserve the live checkout behavior", async () => {
   const referral = "00000000-0000-4000-8000-000000000001";
   for (const extra of [{}, { campaign_ad: "private@example.invalid" }, { campaign_ad: ad, referral_kind: "paid", referral }]) {
@@ -225,7 +236,7 @@ test("schema-cache delay leaves one usable live session, ordinary update failure
 
 async function checkGiftFulfillment(amount, orderSession) {
   const row = { id: "order1", amount_cents: amount, stripe_checkout_session_id: "cs_fixture", status: "pending",
-    campaign_ad: ad, email_sent_at: "2026-11-22" };
+    campaign_ad: ad };
   const writes = [];
   const db = { from(table) {
     assert.equal(table, "rich_gift_orders");
@@ -260,13 +271,18 @@ async function checkGiftFulfillment(amount, orderSession) {
   assert.equal((await fire(event)).status, 200);
   assert.equal(row.status, "paid");
   assert.equal(row.campaign_ad, ad);
+  assert.equal(row.buyer_email, orderSession.customer_details?.email ?? null);
+  assert.equal(Object.hasOwn(row, "email_sent_at"), false);
+  assert.ok(row.gift_token);
+  row.gift_token = null;
+  assert.equal((await fire(event)).status, 503);
   row.status = "refunded";
   assert.equal((await (await fire(event)).json()).ignored, true);
   assert.equal(writes.length, 1);
   assert.equal(row.status, "refunded");
 }
 test("a normal gift keeps attribution and cannot be duplicated or reactivated after refund", async () => {
-  await checkGiftFulfillment(4900, {});
+  await checkGiftFulfillment(4900, { customer_details: { email: "buyer@example.invalid" } });
 });
 
 test("a Black Friday gift can be fulfilled after the offer, replayed and later refunded", async () => {

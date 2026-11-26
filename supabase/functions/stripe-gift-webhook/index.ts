@@ -68,28 +68,12 @@ Deno.serve(async(req:Request)=>{
        .eq("id", order.id).eq("status", "pending"));
    if(saved.error)return new Response("Fulfillment failed",{status:500});
  }
- try{
-   const {data:fulfilled,error:fulfillmentError}=await db.from("rich_gift_orders").select("status,gift_token,email_sent_at,buyer_email").eq("id",order.id).single();
-   if(fulfillmentError||!fulfilled||fulfilled.status!=="paid"||!fulfilled.gift_token){
-     console.error("Gift fulfillment lookup failed for order "+order.id);
-     return new Response("Fulfillment retry needed",{status:503});
-   }
-   if(!fulfilled.email_sent_at){
-     const email=session.customer_details?.email||session.customer_email||fulfilled.buyer_email;
-     if(!email){
-       console.error("Gift receipt missing buyer email for order "+order.id);
-       return new Response("Buyer email missing; manual resolution needed",{status:503});
-     }
-     const resendKey=Deno.env.get("RESEND_API_KEY");
-     if(!resendKey)return new Response("Email service not configured",{status:503});
-       const giftUrl="https://therichbutton.com/open-gift.html?gift_token="+encodeURIComponent(fulfilled.gift_token);
-       const safeUrl=giftUrl.replaceAll("&","&amp;");
-       const payload={from:"The Rich Button <gifts@mail.therichbutton.com>",to:[email],subject:"Your Rich Gift is ready",html:`<div style="background:#14110e;color:#f2e4c9;padding:36px;font-family:Georgia,serif;text-align:center"><h1 style="color:#e6c58b">THE RICH BUTTON</h1><p>Your Rich Gift is ready.</p><p>Keep this private link to open or share your gift:</p><p><a href="${safeUrl}" style="color:#e6c58b">OPEN YOUR RICH GIFT</a></p><p style="font-size:12px;color:#c1ae90">Keep this email to recover your gift later.</p></div>`,text:"Your Rich Gift is ready. Open or share: "+giftUrl};
-       const mail=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+resendKey,"Content-Type":"application/json","Idempotency-Key":"rich-gift-"+order.id},body:JSON.stringify(payload)});
-       if(mail.ok){const {error:markError}=await db.from("rich_gift_orders").update({email_sent_at:new Date().toISOString()}).eq("id",order.id).is("email_sent_at",null);if(markError)throw markError;console.log("Gift receipt email accepted for order "+order.id)}
-       else {console.error("Gift email provider rejected request: "+mail.status);return new Response("Email delivery retry needed",{status:503})}
-     }
-   }catch(err){console.error("Gift receipt email error",String(err));return new Response("Email delivery retry needed",{status:503})}
+ // A concurrent webhook or return-page request may have fulfilled the order.
+ const { data: fulfilled, error: fulfillmentError } = await db.from("rich_gift_orders")
+   .select("status,gift_token").eq("id", order.id).single();
+ if (fulfillmentError || !fulfilled || fulfilled.status !== "paid" || !fulfilled.gift_token) {
+   return new Response("Fulfillment retry needed", { status: 503 });
+ }
  console.log(JSON.stringify({event:event.id,order:order.id,status:"paid"}));
  return Response.json({received:true});
 });

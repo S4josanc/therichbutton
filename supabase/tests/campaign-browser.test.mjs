@@ -35,7 +35,7 @@ function runPage(path, hrefs = [], loadScript = true) {
 // Execute the live checkout request body from gift.html with fictional form values.
 function checkoutBody(page, test = false) {
   const expr = gift.match(/body:JSON\.stringify\((\{recipient,sender,message:dedication,[^}]+\})\)/)[1];
-  const context = {window:page.window, RICH_GIFT_TEST_MODE:test, recipient:'Test recipient', sender:'Test sender',
+  const context = {window:page.window, RICH_GIFT_TEST_MODE:test, wantsRecovery:false, recipient:'Test recipient', sender:'Test sender',
     dedication:'Test message', wallOptIn:{checked:false}, wallAlias:{value:''}};
   return JSON.parse(vm.runInNewContext('JSON.stringify(' + expr + ')', context));
 }

@@ -12,11 +12,12 @@ const { parseHTML } = await import(process.env.CAMPAIGN_TEST_DOM_MODULE || 'link
 const siteRoot = new URL('../../', import.meta.url);
 const origin = 'https://therichbutton.com';
 const mockStripe = 'https://checkout.stripe.com/c/pay/mock-only';
+const recoveryToken = '10000000-0000-4000-8000-000000000001';
 const ad = 'vault-v1-los-angeles';
 const tags = 'utm_source=meta&utm_medium=paid_social&utm_campaign=christmas_2026&utm_content=' + ad + '&utm_term=los-angeles';
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-function render(url, { failedCheckout = false, offerActive = false, staleGiftQuote = false, storageBlocked = false } = {}) {
+function render(url, { failedCheckout = false, offerActive = false, staleGiftQuote = false, storageBlocked = false, recovery = recoveryToken } = {}) {
   const location = new URL(url, origin);
   assert.equal(location.origin, origin);
   const name = location.pathname.slice(1) || 'index.html';
@@ -30,6 +31,11 @@ function render(url, { failedCheckout = false, offerActive = false, staleGiftQuo
   for (const input of document.querySelectorAll('input')) input.checked = input.hasAttribute('checked');
   for (const select of document.querySelectorAll('select')) {
     Object.defineProperty(select, 'value', { writable: true, value: select.querySelector('option[selected], option')?.value });
+  }
+  const dialog = document.getElementById('giftRecoveryDialog');
+  if (dialog) {
+    dialog.showModal = () => { dialog.open = true; };
+    dialog.close = () => { dialog.open = false; dialog.dispatchEvent(new dom.Event('close')); };
   }
   const session = new Map();
   const context = vm.createContext({
@@ -56,7 +62,10 @@ function render(url, { failedCheckout = false, offerActive = false, staleGiftQuo
       if (['rich-gift-checkout','rich-gift-test-checkout'].includes(endpoint)) {
         checkouts.push({ endpoint, payload: JSON.parse(options.body) });
         if (staleGiftQuote) { offerActive = false; return Response.json({code:'price_changed'}, {status:409}); }
-        return failedCheckout ? Response.json({ error: 'Fixture failure' }, { status: 503 }) : Response.json({ checkout_url: mockStripe });
+        return failedCheckout ? Response.json({ error: 'Fixture failure' }, { status: 503 }) : Response.json({
+          checkout_url: mockStripe,
+          ...(JSON.parse(options.body).prepare_recovery ? {recovery_token: recovery} : {})
+        });
       }
       if (endpoint === 'rich-gift-redeem') return Response.json({ verified: true, paid: true, tier: 'rich-gift', name: 'Fixture recipient' });
       return Response.json({ error: 'Unavailable in this fixture' }, { status: 503 });
@@ -126,6 +135,43 @@ test('an ordinary visit and its checkout have no ad association', async () => {
   assert.equal(gift.checkouts.length, 1);
   assert.equal(Object.hasOwn(gift.checkouts[0].payload, 'campaign_ad'), false);
   assert.deepEqual(gift.redirects, [mockStripe]);
+});
+
+test('a buyer can save the private confirmation link before paying at either price', async () => {
+  for (const offerActive of [false, true]) {
+    const page = render('/gift.html?tier=rich-gift&' + tags, {offerActive});
+    await settle();
+    page.document.getElementById('prepareRecovery').checked = true;
+    await page.submit();
+    const dialog = page.document.getElementById('giftRecoveryDialog');
+    assert.equal(dialog.open, true);
+    assert.deepEqual(page.redirects, []);
+    assert.equal(page.checkouts[0].payload.prepare_recovery, true);
+    assert.equal(page.checkouts[0].payload.expected_amount_cents, offerActive ? 2450 : 4900);
+    await page.document.getElementById('beforeGiftCopy').onclick();
+    assert.equal(page.document.getElementById('beforeGiftNote').textContent,
+      'Copy and save this private link: ' + origin + '/gift.html?order=' + recoveryToken);
+    assert.equal(JSON.stringify(page.events).includes(recoveryToken), false);
+    await page.document.getElementById('continueGiftCheckout').onclick();
+    assert.deepEqual(page.redirects, [mockStripe]);
+    assert.equal(page.checkouts.length, 1);
+  }
+});
+
+test('missing or malformed recovery does not redirect automatically or offer an unsafe link', async () => {
+  for (const recovery of [null, 'https://example.invalid/']) {
+    const page = render('/gift.html?tier=rich-gift', {recovery});
+    page.document.getElementById('prepareRecovery').checked = true;
+    await page.submit();
+    assert.deepEqual(page.redirects, []);
+    assert.equal(page.document.getElementById('beforeGiftCopy').hidden, true);
+    assert.equal(page.document.getElementById('beforeGiftDownload').hidden, true);
+    assert.match(page.document.getElementById('beforeGiftNote').textContent, /unavailable/);
+    page.document.getElementById('cancelGiftCheckout').onclick();
+    assert.equal(page.document.getElementById('buyRichGift').disabled, false);
+    assert.equal(page.document.getElementById('giftRecoveryDialog').open, false);
+    assert.deepEqual(page.redirects, []);
+  }
 });
 
 test('private and ambiguous landing URLs leave events and purchase links untagged', () => {
