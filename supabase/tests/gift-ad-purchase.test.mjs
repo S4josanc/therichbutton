@@ -4,6 +4,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { BLACK_FRIDAY, BLACK_FRIDAY_START } from '../functions/_shared/black-friday.mjs';
+import { settledGiftPayment } from '../functions/_shared/settled-gift-payment.mjs';
 import { validGiftPayment, giftOrganicFields } from '../functions/_shared/gift-payment.mjs';
 import { writeOrganicOrder } from '../functions/_shared/organic-order.mjs';
 
@@ -34,7 +35,7 @@ function receipt({ discount = false, orderStatus = 'paid', overrides = {}, recei
     if (!fields.includes('marketing_event_id')) return { data: order };
     return dbError ? { error: {} } : { data: receiptRow };
   }} }}; }}; }};
-  runInNewContext(handlerCode, { createClient: () => db, validGiftPayment, giftOrganicFields, writeOrganicOrder, URL, Response, console,
+  runInNewContext(handlerCode, { createClient: () => db, validGiftPayment, settledGiftPayment, giftOrganicFields, writeOrganicOrder, URL, Response, console,
     Deno: { env: { get: () => 'sk_live_fixture' }, serve: fn => { handler = fn; } },
     Stripe: class { checkout = { sessions: { retrieve: async (id, options) => {
       stripeReads++;

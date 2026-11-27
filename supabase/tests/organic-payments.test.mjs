@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
+import { capturedGiftIntent } from './fixtures/gift-charge.mjs';
 import { BLACK_FRIDAY, BLACK_FRIDAY_START } from '../functions/_shared/black-friday.mjs';
 import { writeOrganicOrder } from '../functions/_shared/organic-order.mjs';
 import { PUBLIC_API_KEY, SITE_ORIGIN } from '../functions/_shared/throne-core.mjs';
@@ -50,7 +51,7 @@ function database() {
         if (table === edition && rows.some(row => row.stripe_session_id === values.stripe_session_id)) {
           return {data: null, error: action === 'insert' ? {code: '23505'} : null};
         }
-        const row = {id: 'order-1', access_token: token, status: 'pending', email_sent_at: 'already-sent', ...values};
+        const row = {id: 'order-1', access_token: token, status: 'pending', currency: 'eur', email_sent_at: 'already-sent', ...values};
         rows.push(row);
         matches = [row];
       } else if (action === 'update') {
@@ -85,7 +86,14 @@ const sessions = () => {
           metadata: params.metadata, client_reference_id: params.client_reference_id};
         return fixture.current;
       },
-      async retrieve(id) { assert.equal(id, sessionId); return fixture.current; },
+      async retrieve(id, options) {
+        assert.equal(id, sessionId);
+        if (fixture.current.metadata?.product === 'rich-gift' && fixture.current.payment_status === 'paid') {
+          assert.deepEqual([...options.expand], ['payment_intent.latest_charge.refunds']);
+          return {...fixture.current, payment_intent: capturedGiftIntent(fixture.current.amount_total)};
+        }
+        return fixture.current;
+      },
     }},
   });
 };
@@ -102,7 +110,8 @@ test('gift order gains proof only after Stripe payment, with both return orders 
     const checkout = await edge('rich-gift-checkout', db, stripe);
     const webhook = await edge('stripe-gift-webhook', db, stripe);
     const status = await edge('rich-gift-order-status', db, stripe);
-    const returned = () => status(new Request('https://fixture.invalid/?token=' + token + '&session_id=' + sessionId));
+    const statusUrl = 'https://fixture.invalid/?token=' + token;
+    const returned = () => status(new Request(statusUrl + '&session_id=' + sessionId));
     assert.equal((await checkout(request({recipient: 'Fixture', organic_post_id: post}))).status, 200);
     const [order] = db.tables[gift];
     assert.equal(order.organic_post_id, post);
@@ -111,10 +120,10 @@ test('gift order gains proof only after Stripe payment, with both return orders 
     assert.equal(new URL(stripe.params.cancel_url).searchParams.get('trb_post'), post);
     assert.equal(new URL(stripe.params.success_url).searchParams.has('trb_post'), false);
     assert.equal(await notify(webhook, stripe.current), 200);
-    assert.equal((await returned()).status, 200);
+    assert.equal((await status(new Request(statusUrl))).status, 200);
     assert.equal(order.organic_verified_at, undefined);
     assert.equal(order.status, 'pending');
-    Object.assign(stripe.current, {status: 'complete', payment_status: 'paid'});
+    Object.assign(stripe.current, {status: 'complete', payment_status: 'paid', payment_intent: 'pi_fixture'});
     assert.equal(await notify(webhook, stripe.current, 'checkout.session.async_payment_succeeded', 'invalid'), 400);
     assert.equal(order.organic_verified_at, undefined);
     if (returnFirst) await returned();
