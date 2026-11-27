@@ -1,4 +1,4 @@
-import { validGiftPayment } from "../_shared/gift-payment.mjs";
+import { settledGiftPayment } from "../_shared/settled-gift-payment.mjs";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ineligible = { status: 409, body: { error: "This order could not be verified for recovery." } };
@@ -20,24 +20,6 @@ function fulfilledOrder(order, id, email) {
     order.stripe_payment_intent_id?.startsWith("pi_");
 }
 
-function settledPayment(session, order) {
-  if (!validGiftPayment(session, order) || session.status !== "complete" ||
-      session.client_reference_id !== order.id) return false;
-  const total = session.amount_total;
-  const intent = session.payment_intent;
-  if (intent?.id !== order.stripe_payment_intent_id || intent.livemode !== true ||
-      intent.status !== "succeeded" || intent.currency !== session.currency ||
-      intent.amount !== total || intent.amount_received !== total) return false;
-  const charge = intent.latest_charge;
-  return typeof charge?.id === "string" && charge.id.length > 0 && charge.payment_intent === intent.id &&
-    charge.livemode === true && charge.status === "succeeded" &&
-    charge.paid === true && charge.captured === true && charge.currency === session.currency &&
-    charge.amount === total && charge.amount_captured === total &&
-    charge.disputed === false && charge.refunded === false && charge.amount_refunded === 0 &&
-    Array.isArray(charge.refunds?.data) && charge.refunds.data.length === 0 &&
-    charge.refunds.has_more === false;
-}
-
 export async function recoverPaidGift(request, { loadOrder, loadSession, recordAudit }) {
   const id = typeof request?.order_id === "string" ? request.order_id.trim().toLowerCase() : "";
   const email = mailbox(request?.buyer_email);
@@ -49,11 +31,11 @@ export async function recoverPaidGift(request, { loadOrder, loadSession, recordA
     if (!fulfilledOrder(order, id, email)) return ineligible;
     const session = await loadSession(order.stripe_checkout_session_id);
     const destination = session?.customer_details?.email || session?.customer_email;
-    if (mailbox(destination) !== email || !settledPayment(session, order)) return ineligible;
+    if (mailbox(destination) !== email || !settledGiftPayment(session, order)) return ineligible;
 
     // Re-read after Stripe in case the order was revoked while checking the charge.
     const current = await loadOrder(id);
-    if (!fulfilledOrder(current, id, email) || !settledPayment(session, current)) return ineligible;
+    if (!fulfilledOrder(current, id, email) || !settledGiftPayment(session, current)) return ineligible;
     await recordAudit(id);
     return {
       status: 200,
